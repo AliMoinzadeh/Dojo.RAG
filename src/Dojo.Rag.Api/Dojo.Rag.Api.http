@@ -1,0 +1,6 @@
+@Dojo.Rag.Api_HostAddress = http://localhost:5118
+
+GET {{Dojo.Rag.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

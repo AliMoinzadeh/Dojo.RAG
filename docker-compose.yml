@@ -1,0 +1,19 @@
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: rag-demo-qdrant
+    restart: unless-stopped
+    ports:
+      - "6333:6333"  # HTTP API & Dashboard
+      - "6334:6334"  # gRPC API
+    volumes:
+      - ./qdrant_storage:/qdrant/storage
+    environment:
+      - QDRANT__LOG_LEVEL=INFO
+      - QDRANT__SERVICE__ENABLE_CORS=true
+
+# Usage:
+# Start Qdrant:     docker-compose up -d
+# Stop Qdrant:      docker-compose down
+# View logs:        docker-compose logs -f qdrant
+# Dashboard URL:    http://localhost:6333/dashboard

@@ -8,6 +8,11 @@ import type {
   ActiveConfig,
   EmbeddingVisualizationRequest,
   EmbeddingVisualizationResponse,
+  DemoSentencesResponse,
+  VectorSearchDemoRequest,
+  VectorSearchDemoResponse,
+  InitializeDemoResponse,
+  DemoStatus,
 } from '../types/api';
 
 const API_BASE = '/api';
@@ -100,5 +105,32 @@ export const api = {
       body: JSON.stringify(request),
     });
     return handleResponse<EmbeddingVisualizationResponse>(response);
+  },
+
+  // Vector Search Demo
+  async getDemoSentences(): Promise<DemoSentencesResponse> {
+    const response = await fetch(`${API_BASE}/vectorsearchdemo/sentences`);
+    return handleResponse<DemoSentencesResponse>(response);
+  },
+
+  async initializeDemo(): Promise<InitializeDemoResponse> {
+    const response = await fetch(`${API_BASE}/vectorsearchdemo/initialize`, {
+      method: 'POST',
+    });
+    return handleResponse<InitializeDemoResponse>(response);
+  },
+
+  async searchDemo(request: VectorSearchDemoRequest): Promise<VectorSearchDemoResponse> {
+    const response = await fetch(`${API_BASE}/vectorsearchdemo/search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
+    });
+    return handleResponse<VectorSearchDemoResponse>(response);
+  },
+
+  async getDemoStatus(): Promise<DemoStatus> {
+    const response = await fetch(`${API_BASE}/vectorsearchdemo/status`);
+    return handleResponse<DemoStatus>(response);
   },
 };

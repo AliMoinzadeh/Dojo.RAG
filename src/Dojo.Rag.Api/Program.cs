@@ -24,6 +24,10 @@ builder.Services.AddSingleton<IDocumentIngestionService, DocumentIngestionServic
 builder.Services.AddSingleton<IRagOrchestrator, RagOrchestrator>();
 builder.Services.AddSingleton<ITokenCounterService, TokenCounterService>();
 
+// Vector Search Demo Services
+builder.Services.AddSingleton<IHybridSearchService, HybridSearchService>();
+builder.Services.AddSingleton<IQueryExpansionService, QueryExpansionService>();
+
 // Controllers
 builder.Services.AddControllers();
 

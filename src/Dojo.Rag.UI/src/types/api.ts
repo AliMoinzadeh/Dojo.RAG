@@ -96,3 +96,69 @@ export interface EmbeddingVisualizationResponse {
   embeddingModel: string;
   originalDimensions: number;
 }
+
+// Vector Search Demo Types
+export interface DemoSentence {
+  id: string;
+  text: string;
+  category: string;
+  tags: string[];
+}
+
+export interface DemoScenario {
+  name: string;
+  query: string;
+  expectedMatch: string;
+  explanation: string;
+}
+
+export interface DemoSentencesResponse {
+  description: string;
+  sentences: DemoSentence[];
+  demoScenarios: DemoScenario[];
+}
+
+export interface SearchEnhancements {
+  useHybridSearch: boolean;
+  useQueryExpansion: boolean;
+}
+
+export interface VectorSearchDemoRequest {
+  query: string;
+  enhancements?: SearchEnhancements;
+  topK?: number;
+}
+
+export interface SearchResultItem {
+  id: string;
+  text: string;
+  category: string;
+  score: number;
+  matchedKeywords: string[];
+}
+
+export interface SearchResultSet {
+  results: SearchResultItem[];
+  searchTimeMs: number;
+  expandedQuery?: string;
+}
+
+export interface VectorSearchDemoResponse {
+  standardResults: SearchResultSet;
+  enhancedResults?: SearchResultSet;
+  originalQuery: string;
+  appliedEnhancements: SearchEnhancements;
+}
+
+export interface InitializeDemoResponse {
+  success: boolean;
+  sentencesEmbedded: number;
+  collectionName: string;
+  message: string;
+}
+
+export interface DemoStatus {
+  isInitialized: boolean;
+  embeddedSentenceCount: number;
+  embeddingModel: string | null;
+}

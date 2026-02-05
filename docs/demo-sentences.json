@@ -1,0 +1,139 @@
+{
+  "description": "Demo-Sätze für die Vector Search Demo. Diese Sätze zeigen verschiedene Szenarien und Limitationen der Vektorsuche.",
+  "sentences": [
+    {
+      "id": "espresso-pressure",
+      "text": "Espresso benötigt einen Druck von 9 bar für die optimale Extraktion.",
+      "category": "espresso",
+      "tags": ["druck", "extraktion", "technik"]
+    },
+    {
+      "id": "espresso-crema",
+      "text": "Die goldene Crema auf dem Espresso zeigt die Qualität der Zubereitung.",
+      "category": "espresso",
+      "tags": ["crema", "qualität"]
+    },
+    {
+      "id": "espresso-temperature",
+      "text": "Die ideale Brühtemperatur für Espresso liegt zwischen 92 und 96 Grad Celsius.",
+      "category": "espresso",
+      "tags": ["temperatur", "brühen"]
+    },
+    {
+      "id": "cold-brew-time",
+      "text": "Cold Brew Kaffee wird 12 bis 24 Stunden kalt extrahiert.",
+      "category": "cold-brew",
+      "tags": ["zeit", "kalt", "extraktion"]
+    },
+    {
+      "id": "cold-brew-no-heat",
+      "text": "Bei Cold Brew wird kein heißes Wasser verwendet, was zu weniger Säure führt.",
+      "category": "cold-brew",
+      "tags": ["kalt", "säure", "wasser"]
+    },
+    {
+      "id": "pour-over-filter",
+      "text": "Pour Over Kaffee verwendet einen Papierfilter für klaren Geschmack.",
+      "category": "pour-over",
+      "tags": ["filter", "geschmack", "papier"]
+    },
+    {
+      "id": "pour-over-bloom",
+      "text": "Das Blooming beim Pour Over lässt CO2 aus dem frisch gemahlenen Kaffee entweichen.",
+      "category": "pour-over",
+      "tags": ["blooming", "co2", "frisch"]
+    },
+    {
+      "id": "french-press-coarse",
+      "text": "Für die French Press sollte der Kaffee grob gemahlen werden.",
+      "category": "french-press",
+      "tags": ["mahlung", "grob"]
+    },
+    {
+      "id": "french-press-steep",
+      "text": "French Press Kaffee zieht etwa 4 Minuten bevor er gepresst wird.",
+      "category": "french-press",
+      "tags": ["ziehen", "zeit", "pressen"]
+    },
+    {
+      "id": "beans-arabica",
+      "text": "Arabica Bohnen haben einen milderen und komplexeren Geschmack als Robusta.",
+      "category": "bohnen",
+      "tags": ["arabica", "geschmack", "sorte"]
+    },
+    {
+      "id": "beans-robusta",
+      "text": "Robusta Bohnen enthalten mehr Koffein und schmecken kräftiger.",
+      "category": "bohnen",
+      "tags": ["robusta", "koffein", "stark"]
+    },
+    {
+      "id": "beans-roast",
+      "text": "Dunkel geröstete Bohnen haben weniger Säure aber mehr Bitterstoffe.",
+      "category": "bohnen",
+      "tags": ["röstung", "säure", "bitter"]
+    },
+    {
+      "id": "milk-foam",
+      "text": "Für Cappuccino wird die Milch auf etwa 65 Grad aufgeschäumt.",
+      "category": "milch",
+      "tags": ["schaum", "temperatur", "cappuccino"]
+    },
+    {
+      "id": "milk-latte-art",
+      "text": "Latte Art erfordert fein geschäumte Milch mit glänzender Textur.",
+      "category": "milch",
+      "tags": ["latte-art", "schaum", "textur"]
+    },
+    {
+      "id": "grind-fresh",
+      "text": "Frisch gemahlener Kaffee verliert nach 15 Minuten bereits Aroma.",
+      "category": "mahlung",
+      "tags": ["frisch", "aroma", "zeit"]
+    },
+    {
+      "id": "water-quality",
+      "text": "Die Wasserqualität beeinflusst den Kaffeegeschmack erheblich.",
+      "category": "wasser",
+      "tags": ["wasser", "qualität", "geschmack"]
+    },
+    {
+      "id": "caffeine-effect",
+      "text": "Koffein blockiert Adenosin-Rezeptoren und macht dadurch wach.",
+      "category": "gesundheit",
+      "tags": ["koffein", "wirkung", "wach"]
+    },
+    {
+      "id": "decaf-process",
+      "text": "Entkoffeinierter Kaffee wird durch Wasserextraktion oder CO2-Verfahren hergestellt.",
+      "category": "gesundheit",
+      "tags": ["entkoffeiniert", "verfahren"]
+    }
+  ],
+  "demoScenarios": [
+    {
+      "name": "Synonym-Problem",
+      "query": "Java Getränk",
+      "expectedMatch": "espresso-pressure",
+      "explanation": "Java ist ein Synonym für Kaffee, wird aber semantisch nicht erkannt"
+    },
+    {
+      "name": "Negations-Problem", 
+      "query": "Kaffee ohne Hitze",
+      "expectedMatch": "cold-brew-no-heat",
+      "explanation": "Negationen sind schwer für reine Vektorsuche"
+    },
+    {
+      "name": "Fachbegriff-Problem",
+      "query": "Schaum auf dem Kaffee",
+      "expectedMatch": "espresso-crema",
+      "explanation": "Crema ist der Fachbegriff für Espresso-Schaum"
+    },
+    {
+      "name": "Zahlen-Problem",
+      "query": "Temperatur unter 95 Grad",
+      "expectedMatch": "espresso-temperature",
+      "explanation": "Numerische Vergleiche sind schwer für Embedding-Modelle"
+    }
+  ]
+}

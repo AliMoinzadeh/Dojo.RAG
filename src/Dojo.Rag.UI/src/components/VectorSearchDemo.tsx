@@ -21,6 +21,7 @@ export function VectorSearchDemo() {
   // Enhancement toggles
   const [useHybridSearch, setUseHybridSearch] = useState(false);
   const [useQueryExpansion, setUseQueryExpansion] = useState(false);
+  const [useReranking, setUseReranking] = useState(false);
 
   useEffect(() => {
     loadSentencesAndStatus();
@@ -69,11 +70,12 @@ export function VectorSearchDemo() {
       const enhancements: SearchEnhancements = {
         useHybridSearch,
         useQueryExpansion,
+        useReranking,
       };
 
       const searchResults = await api.searchDemo({
         query: query.trim(),
-        enhancements: (useHybridSearch || useQueryExpansion) ? enhancements : undefined,
+        enhancements: (useHybridSearch || useQueryExpansion || useReranking) ? enhancements : undefined,
         topK: 5,
       });
       setResults(searchResults);
@@ -210,6 +212,13 @@ export function VectorSearchDemo() {
             useQueryExpansion,
             setUseQueryExpansion,
             <Lightbulb className="w-4 h-4 text-yellow-400" />
+          )}
+          {renderToggle(
+            'Reranking',
+            'Cross-Encoder bewertet die Top-Ergebnisse neu',
+            useReranking,
+            setUseReranking,
+            <Zap className="w-4 h-4 text-green-400" />
           )}
         </div>
       </div>
@@ -373,6 +382,10 @@ export function VectorSearchDemo() {
           <p>
             <strong>Query Expansion:</strong> Ein LLM erweitert die Suchanfrage mit
             Synonymen und verwandten Begriffen, bevor die Vektorsuche ausgeführt wird.
+          </p>
+          <p>
+            <strong>Reranking:</strong> Ein Cross-Encoder bewertet die Top-Ergebnisse
+            neu und ordnet sie nach feinerer Relevanz.
           </p>
         </div>
       </div>

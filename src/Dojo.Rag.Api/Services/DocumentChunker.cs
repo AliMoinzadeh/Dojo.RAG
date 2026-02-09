@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Options;
 using Dojo.Rag.Api.Configuration;
 using Dojo.Rag.Api.Models;
+using System.Text.RegularExpressions;
 
 namespace Dojo.Rag.Api.Services;
 
@@ -34,6 +35,18 @@ public class DocumentChunker : IDocumentChunker
             _logger.LogWarning("Document {FileName} has no content to chunk", document.FileName);
             return chunks;
         }
+
+        if (_settings.UseSemanticChunking)
+        {
+            return ChunkBySemanticBoundaries(document, content);
+        }
+
+        return ChunkWithOverlap(document, content);
+    }
+
+    private IEnumerable<DocumentChunk> ChunkWithOverlap(SourceDocument document, string content)
+    {
+        var chunks = new List<DocumentChunk>();
 
         var chunkSize = _settings.ChunkSize;
         var overlap = _settings.ChunkOverlap;
@@ -80,6 +93,104 @@ public class DocumentChunker : IDocumentChunker
             document.FileName, chunks.Count, chunkSize, overlap);
         
         return chunks;
+    }
+
+    private IEnumerable<DocumentChunk> ChunkBySemanticBoundaries(SourceDocument document, string content)
+    {
+        var chunks = new List<DocumentChunk>();
+        var targetSize = _settings.ChunkSize;
+        var maxSize = (int)(targetSize * 1.3);
+
+        var segments = ExtractSentenceSegments(content).ToList();
+        if (segments.Count == 0)
+        {
+            return chunks;
+        }
+
+        int chunkIndex = 0;
+        int currentStart = segments[0].StartIndex;
+        int currentEnd = segments[0].EndIndex;
+
+        for (int i = 1; i < segments.Count; i++)
+        {
+            var segment = segments[i];
+            var currentLength = currentEnd - currentStart;
+            var nextLength = segment.EndIndex - currentStart;
+
+            if (nextLength <= maxSize || currentLength < targetSize)
+            {
+                currentEnd = segment.EndIndex;
+                continue;
+            }
+
+            var chunk = CreateChunkFromRange(document, content, currentStart, currentEnd, chunkIndex++);
+            if (chunk != null)
+            {
+                chunks.Add(chunk);
+            }
+
+            currentStart = segment.StartIndex;
+            currentEnd = segment.EndIndex;
+        }
+
+        var finalChunk = CreateChunkFromRange(document, content, currentStart, currentEnd, chunkIndex);
+        if (finalChunk != null)
+        {
+            chunks.Add(finalChunk);
+        }
+
+        _logger.LogInformation("Semantically chunked document {FileName} into {ChunkCount} chunks (target size: {ChunkSize})",
+            document.FileName, chunks.Count, targetSize);
+
+        return chunks;
+    }
+
+    private static IEnumerable<(int StartIndex, int EndIndex)> ExtractSentenceSegments(string content)
+    {
+        foreach (Match match in Regex.Matches(content, @"[^.!?\n]+[.!?]+|\S[^.!?\n]*$"))
+        {
+            var value = match.Value.Trim();
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                continue;
+            }
+
+            yield return (match.Index, match.Index + match.Length);
+        }
+    }
+
+    private static DocumentChunk? CreateChunkFromRange(
+        SourceDocument document,
+        string content,
+        int startIndex,
+        int endIndex,
+        int chunkIndex)
+    {
+        if (endIndex <= startIndex)
+        {
+            return null;
+        }
+
+        var rawChunk = content.Substring(startIndex, endIndex - startIndex);
+        var trimmed = rawChunk.Trim();
+        if (string.IsNullOrWhiteSpace(trimmed))
+        {
+            return null;
+        }
+
+        var leadingTrim = rawChunk.Length - rawChunk.TrimStart().Length;
+        var trailingTrim = rawChunk.Length - rawChunk.TrimEnd().Length;
+        var adjustedStart = startIndex + leadingTrim;
+        var adjustedEnd = endIndex - trailingTrim;
+
+        return DocumentChunkFactory.Create(
+            content: trimmed,
+            sourceDocument: document.Id,
+            sourceFileName: document.FileName,
+            chunkIndex: chunkIndex,
+            startCharIndex: adjustedStart,
+            endCharIndex: adjustedEnd
+        );
     }
 
     private string AdjustChunkBoundary(string chunk, string fullContent, int startPosition, int maxLength)

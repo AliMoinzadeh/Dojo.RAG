@@ -121,6 +121,7 @@ export interface DemoSentencesResponse {
 export interface SearchEnhancements {
   useHybridSearch: boolean;
   useQueryExpansion: boolean;
+  useReranking: boolean;
 }
 
 export interface VectorSearchDemoRequest {

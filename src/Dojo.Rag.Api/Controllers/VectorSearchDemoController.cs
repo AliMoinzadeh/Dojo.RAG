@@ -18,6 +18,7 @@ public class VectorSearchDemoController : ControllerBase
     private readonly IEmbeddingService _embeddingService;
     private readonly IHybridSearchService _hybridSearchService;
     private readonly IQueryExpansionService _queryExpansionService;
+    private readonly IRerankingService _rerankingService;
     private readonly IWebHostEnvironment _environment;
     private readonly ILogger<VectorSearchDemoController> _logger;
 
@@ -30,12 +31,14 @@ public class VectorSearchDemoController : ControllerBase
         IEmbeddingService embeddingService,
         IHybridSearchService hybridSearchService,
         IQueryExpansionService queryExpansionService,
+        IRerankingService rerankingService,
         IWebHostEnvironment environment,
         ILogger<VectorSearchDemoController> logger)
     {
         _embeddingService = embeddingService;
         _hybridSearchService = hybridSearchService;
         _queryExpansionService = queryExpansionService;
+        _rerankingService = rerankingService;
         _environment = environment;
         _logger = logger;
     }
@@ -134,7 +137,7 @@ public class VectorSearchDemoController : ControllerBase
 
             // Enhanced search if requested
             SearchResultSet? enhancedResults = null;
-            if (enhancements.UseHybridSearch || enhancements.UseQueryExpansion)
+            if (enhancements.UseHybridSearch || enhancements.UseQueryExpansion || enhancements.UseReranking)
             {
                 enhancedResults = await PerformEnhancedSearchAsync(
                     request.Query,
@@ -216,7 +219,7 @@ public class VectorSearchDemoController : ControllerBase
         string query,
         List<DemoSentence> sentences,
         int topK,
-        SearchEnhancements enhancements,
+            SearchEnhancements enhancements,
         CancellationToken cancellationToken)
     {
         var stopwatch = Stopwatch.StartNew();
@@ -271,6 +274,11 @@ public class VectorSearchDemoController : ControllerBase
                 ))
                 .ToList();
         }
+
+            if (enhancements.UseReranking)
+            {
+                results = await _rerankingService.RerankAsync(query, results, topK, cancellationToken);
+            }
 
         stopwatch.Stop();
 

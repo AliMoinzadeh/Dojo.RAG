@@ -8,4 +8,5 @@ public class RagSettings
     public int ChunkOverlap { get; set; } = 100;
     public int TopK { get; set; } = 5;
     public double MinRelevanceScore { get; set; } = 0.5;
+    public bool UseSemanticChunking { get; set; } = false;
 }

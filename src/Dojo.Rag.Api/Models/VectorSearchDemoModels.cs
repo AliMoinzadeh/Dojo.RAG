@@ -28,7 +28,8 @@ public record DemoSentencesResponse(
 // Search enhancement options
 public record SearchEnhancements(
     bool UseHybridSearch = false,
-    bool UseQueryExpansion = false
+    bool UseQueryExpansion = false,
+    bool UseReranking = false
 );
 
 // Search request/response

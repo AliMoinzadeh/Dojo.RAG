@@ -27,6 +27,7 @@ builder.Services.AddSingleton<ITokenCounterService, TokenCounterService>();
 // Vector Search Demo Services
 builder.Services.AddSingleton<IHybridSearchService, HybridSearchService>();
 builder.Services.AddSingleton<IQueryExpansionService, QueryExpansionService>();
+builder.Services.AddSingleton<IRerankingService, RerankingService>();
 
 // Controllers
 builder.Services.AddControllers();

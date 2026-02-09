@@ -43,7 +43,7 @@ Verwendet ein LLM um die Suchanfrage mit Synonymen und verwandten Begriffen zu e
 ## Geplante Verbesserungen
 
 ### 4. Reranking (Cross-Encoder)
-**Status:** 🔜 Geplant
+**Status:** ✅ Implementiert
 
 **Beschreibung:**
 Nach der initialen Vektorsuche werden die Top-K Ergebnisse mit einem Cross-Encoder Model neu bewertet. Cross-Encoder betrachten Query und Dokument gemeinsam und können feinere Relevanz-Urteile treffen.
@@ -53,29 +53,19 @@ Nach der initialen Vektorsuche werden die Top-K Ergebnisse mit einem Cross-Encod
 - Kann Kontext besser verstehen
 - Besonders gut bei ambigen Queries
 
-**Implementierungsansatz:**
-```csharp
-public interface IRerankingService
-{
-    Task<List<SearchResultItem>> RerankAsync(
-        string query,
-        List<SearchResultItem> candidates,
-        int topK = 5,
-        CancellationToken cancellationToken = default);
-}
-```
+**Implementierung:**
+- [RerankingService.cs](../src/Dojo.Rag.Api/Services/RerankingService.cs)
+- Demo-Flow: `PerformEnhancedSearchAsync` mit optionalem Reranking
 
-**Optionen:**
-- Lokales Model (ms-marco-MiniLM-L-6-v2)
-- API-basiert (Cohere Rerank, Jina Reranker)
-- LLM-basiertes Reranking (langsamer aber flexibler)
+**Hinweis:**
+- Aktuell LLM-basiertes Reranking (für Demo-Zwecke) mit Fallback auf Original-Reihenfolge
 
 **Aufwand:** Mittel - benötigt zusätzliches ML-Model oder API-Integration
 
 ---
 
 ### 5. Semantic Chunking
-**Status:** 🔜 Geplant
+**Status:** ✅ Implementiert
 
 **Beschreibung:**
 Statt Dokumente nach fixer Zeichenzahl zu chunken, werden semantische Grenzen verwendet (Absätze, Themenübergänge).
@@ -85,21 +75,12 @@ Statt Dokumente nach fixer Zeichenzahl zu chunken, werden semantische Grenzen ve
 - Bessere Embedding-Qualität
 - Weniger abgeschnittene Sätze
 
-**Implementierungsansatz:**
-```csharp
-public interface ISemanticChunker
-{
-    Task<List<DocumentChunk>> ChunkBySemanticBoundariesAsync(
-        string content,
-        int targetChunkSize = 500,
-        CancellationToken cancellationToken = default);
-}
-```
+**Implementierung:**
+- [DocumentChunker.cs](../src/Dojo.Rag.Api/Services/DocumentChunker.cs)
+- Aktivierung per `Rag:UseSemanticChunking` in [appsettings.json](../src/Dojo.Rag.Api/appsettings.json)
 
-**Optionen:**
-- Satzgrenzen-basiert (NLTK/spaCy-ähnlich)
-- Embedding-Distanz zwischen aufeinanderfolgenden Sätzen
-- LLM-basierte Themenanalyse
+**Ansatz:**
+- Satzgrenzen-basiertes Aggregieren auf Ziel-Chunk-Groesse
 
 **Aufwand:** Mittel - Anpassung in DocumentChunker
 
@@ -253,7 +234,8 @@ Führt Suche mit optionalen Verbesserungen durch.
   "query": "Kaffee Temperatur",
   "enhancements": {
     "useHybridSearch": true,
-    "useQueryExpansion": false
+    "useQueryExpansion": false,
+    "useReranking": true
   },
   "topK": 5
 }

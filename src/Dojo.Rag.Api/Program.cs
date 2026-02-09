@@ -35,6 +35,7 @@ builder.Services.AddSingleton<ITokenCounterService, TokenCounterService>();
 builder.Services.AddSingleton<IHybridSearchService, HybridSearchService>();
 builder.Services.AddSingleton<IQueryExpansionService, QueryExpansionService>();
 builder.Services.AddSingleton<IRerankingService, RerankingService>();
+builder.Services.AddSingleton<IMultiVectorSearchService, MultiVectorSearchService>();
 
 // Controllers
 builder.Services.AddControllers();

@@ -29,14 +29,16 @@ public record DemoSentencesResponse(
 public record SearchEnhancements(
     bool UseHybridSearch = false,
     bool UseQueryExpansion = false,
-    bool UseReranking = false
+    bool UseReranking = false,
+    bool UseMultiVectorSearch = false
 );
 
 // Search request/response
 public record VectorSearchDemoRequest(
     string Query,
     SearchEnhancements? Enhancements = null,
-    int TopK = 5
+    int TopK = 5,
+    double MinScore = 0.0
 );
 
 public record SearchResultItem(

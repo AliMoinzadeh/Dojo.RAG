@@ -122,12 +122,14 @@ export interface SearchEnhancements {
   useHybridSearch: boolean;
   useQueryExpansion: boolean;
   useReranking: boolean;
+  useMultiVectorSearch: boolean;
 }
 
 export interface VectorSearchDemoRequest {
   query: string;
   enhancements?: SearchEnhancements;
   topK?: number;
+  minScore?: number;
 }
 
 export interface SearchResultItem {

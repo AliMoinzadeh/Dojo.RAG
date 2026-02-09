@@ -19,12 +19,14 @@ public class VectorSearchDemoController : ControllerBase
     private readonly IHybridSearchService _hybridSearchService;
     private readonly IQueryExpansionService _queryExpansionService;
     private readonly IRerankingService _rerankingService;
+    private readonly IMultiVectorSearchService _multiVectorSearchService;
     private readonly IWebHostEnvironment _environment;
     private readonly ILogger<VectorSearchDemoController> _logger;
 
     // In-memory cache for demo sentences and their embeddings
     private static DemoSentencesResponse? _cachedSentences;
     private static readonly ConcurrentDictionary<string, float[]> _sentenceEmbeddings = new();
+    private static readonly ConcurrentDictionary<string, float[]> _tagEmbeddings = new();
     private static string? _embeddingModelUsed;
 
     public VectorSearchDemoController(
@@ -32,6 +34,7 @@ public class VectorSearchDemoController : ControllerBase
         IHybridSearchService hybridSearchService,
         IQueryExpansionService queryExpansionService,
         IRerankingService rerankingService,
+        IMultiVectorSearchService multiVectorSearchService,
         IWebHostEnvironment environment,
         ILogger<VectorSearchDemoController> logger)
     {
@@ -39,6 +42,7 @@ public class VectorSearchDemoController : ControllerBase
         _hybridSearchService = hybridSearchService;
         _queryExpansionService = queryExpansionService;
         _rerankingService = rerankingService;
+        _multiVectorSearchService = multiVectorSearchService;
         _environment = environment;
         _logger = logger;
     }
@@ -76,15 +80,24 @@ public class VectorSearchDemoController : ControllerBase
 
             // Clear existing embeddings if model changed or not initialized
             _sentenceEmbeddings.Clear();
+            _tagEmbeddings.Clear();
 
             // Generate embeddings for all sentences
             var texts = sentences.Sentences.Select(s => s.Text).ToList();
             var embeddings = await _embeddingService.GenerateEmbeddingsAsync(texts, cancellationToken);
 
+            var tagTexts = sentences.Sentences
+                .Select(s => string.IsNullOrWhiteSpace(string.Join(" ", s.Tags)) ? s.Text : string.Join(" ", s.Tags))
+                .ToList();
+            var tagEmbeddings = await _embeddingService.GenerateEmbeddingsAsync(tagTexts, cancellationToken);
+
             for (int i = 0; i < sentences.Sentences.Count; i++)
             {
                 var embeddingArray = embeddings[i].ToArray();
                 _sentenceEmbeddings[sentences.Sentences[i].Id] = embeddingArray;
+
+                var tagEmbeddingArray = tagEmbeddings[i].ToArray();
+                _tagEmbeddings[sentences.Sentences[i].Id] = tagEmbeddingArray;
             }
 
             _embeddingModelUsed = "current"; // Track which model was used
@@ -127,22 +140,25 @@ public class VectorSearchDemoController : ControllerBase
 
             var sentences = await LoadSentencesAsync();
             var enhancements = request.Enhancements ?? new SearchEnhancements();
+            var minScore = request.MinScore;
 
             // Standard vector search
             var standardResults = await PerformVectorSearchAsync(
                 request.Query, 
                 sentences.Sentences, 
                 request.TopK, 
+                minScore,
                 cancellationToken);
 
             // Enhanced search if requested
             SearchResultSet? enhancedResults = null;
-            if (enhancements.UseHybridSearch || enhancements.UseQueryExpansion || enhancements.UseReranking)
+                if (enhancements.UseHybridSearch || enhancements.UseQueryExpansion || enhancements.UseReranking || enhancements.UseMultiVectorSearch)
             {
                 enhancedResults = await PerformEnhancedSearchAsync(
                     request.Query,
                     sentences.Sentences,
                     request.TopK,
+                    minScore,
                     enhancements,
                     cancellationToken);
             }
@@ -179,6 +195,7 @@ public class VectorSearchDemoController : ControllerBase
         string query,
         List<DemoSentence> sentences,
         int topK,
+        double minScore,
         CancellationToken cancellationToken)
     {
         var stopwatch = Stopwatch.StartNew();
@@ -199,6 +216,7 @@ public class VectorSearchDemoController : ControllerBase
         }
 
         var results = scores
+            .Where(s => s.Score >= minScore)
             .OrderByDescending(s => s.Score)
             .Take(topK)
             .Select(s => new SearchResultItem(
@@ -219,7 +237,8 @@ public class VectorSearchDemoController : ControllerBase
         string query,
         List<DemoSentence> sentences,
         int topK,
-            SearchEnhancements enhancements,
+        double minScore,
+        SearchEnhancements enhancements,
         CancellationToken cancellationToken)
     {
         var stopwatch = Stopwatch.StartNew();
@@ -248,6 +267,15 @@ public class VectorSearchDemoController : ControllerBase
                 queryEmbedding,
                 topK);
         }
+        else if (enhancements.UseMultiVectorSearch)
+        {
+            results = await _multiVectorSearchService.SearchAsync(
+                sentences,
+                _sentenceEmbeddings.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+                _tagEmbeddings.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+                queryEmbedding,
+                topK);
+        }
         else
         {
             // Pure vector search with expanded query
@@ -263,6 +291,7 @@ public class VectorSearchDemoController : ControllerBase
             }
 
             results = scores
+                .Where(s => s.Score >= minScore)
                 .OrderByDescending(s => s.Score)
                 .Take(topK)
                 .Select(s => new SearchResultItem(
@@ -272,6 +301,14 @@ public class VectorSearchDemoController : ControllerBase
                     Math.Round(s.Score, 4),
                     new List<string>()
                 ))
+                .ToList();
+        }
+
+        if (minScore > 0)
+        {
+            results = results
+                .Where(result => result.Score >= minScore)
+                .Take(topK)
                 .ToList();
         }
 

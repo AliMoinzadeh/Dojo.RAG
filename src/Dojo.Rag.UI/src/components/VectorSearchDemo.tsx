@@ -22,6 +22,8 @@ export function VectorSearchDemo() {
   const [useHybridSearch, setUseHybridSearch] = useState(false);
   const [useQueryExpansion, setUseQueryExpansion] = useState(false);
   const [useReranking, setUseReranking] = useState(false);
+  const [useMultiVectorSearch, setUseMultiVectorSearch] = useState(false);
+  const [minScore, setMinScore] = useState(0.5);
 
   useEffect(() => {
     loadSentencesAndStatus();
@@ -71,12 +73,16 @@ export function VectorSearchDemo() {
         useHybridSearch,
         useQueryExpansion,
         useReranking,
+        useMultiVectorSearch,
       };
 
       const searchResults = await api.searchDemo({
         query: query.trim(),
-        enhancements: (useHybridSearch || useQueryExpansion || useReranking) ? enhancements : undefined,
+        enhancements: (useHybridSearch || useQueryExpansion || useReranking || useMultiVectorSearch)
+          ? enhancements
+          : undefined,
         topK: 5,
+        minScore,
       });
       setResults(searchResults);
     } catch (err) {
@@ -220,6 +226,13 @@ export function VectorSearchDemo() {
             setUseReranking,
             <Zap className="w-4 h-4 text-green-400" />
           )}
+          {renderToggle(
+            'Multi-Vector Search',
+            'Separate Embeddings fuer Inhalt und Tags',
+            useMultiVectorSearch,
+            setUseMultiVectorSearch,
+            <Search className="w-4 h-4 text-purple-400" />
+          )}
         </div>
       </div>
 
@@ -242,6 +255,22 @@ export function VectorSearchDemo() {
             <Search className={`w-4 h-4 ${loading ? 'animate-pulse' : ''}`} />
             Suchen
           </button>
+        </div>
+
+        <div className="mt-4">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-sm text-gray-300">Min-Score Threshold</span>
+            <span className="text-xs text-gray-400">{minScore.toFixed(2)}</span>
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={1}
+            step={0.01}
+            value={minScore}
+            onChange={(e) => setMinScore(parseFloat(e.target.value))}
+            className="w-full accent-blue-500"
+          />
         </div>
 
         {/* Demo Scenarios */}
@@ -386,6 +415,10 @@ export function VectorSearchDemo() {
           <p>
             <strong>Reranking:</strong> Ein Cross-Encoder bewertet die Top-Ergebnisse
             neu und ordnet sie nach feinerer Relevanz.
+          </p>
+          <p>
+            <strong>Multi-Vector Search:</strong> Inhalt und Tags werden getrennt
+            eingebettet und gewichtet zusammengefuehrt.
           </p>
         </div>
       </div>

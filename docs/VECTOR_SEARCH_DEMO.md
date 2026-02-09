@@ -87,7 +87,7 @@ Statt Dokumente nach fixer Zeichenzahl zu chunken, werden semantische Grenzen ve
 ---
 
 ### 6. Min-Score Threshold Slider
-**Status:** 🔜 Geplant
+**Status:** ✅ Implementiert
 
 **Beschreibung:**
 Dynamische Anpassung des Minimum-Relevanz-Scores zur Laufzeit über einen UI-Slider.
@@ -97,17 +97,17 @@ Dynamische Anpassung des Minimum-Relevanz-Scores zur Laufzeit über einen UI-Sli
 - Gut für Demos und Experimente
 - Einfach zu verstehen
 
-**Implementierungsansatz:**
+**Implementierung:**
 - Frontend: Range-Slider (0.0 - 1.0)
-- Backend: Parameter an Search-Endpoint durchreichen
-- Visualisierung: Zeigt wie viele Ergebnisse bei welchem Threshold
+- Backend: `minScore` Parameter im Search-Endpoint
+- Filterung in Standard und Enhanced Search
 
 **Aufwand:** Gering - nur UI + Parameter
 
 ---
 
 ### 7. Multi-Vector Search
-**Status:** 🔜 Geplant (komplex)
+**Status:** ✅ Implementiert (Demo)
 
 **Beschreibung:**
 Mehrere Embeddings pro Chunk speichern: Titel/Überschrift, Hauptinhalt, extrahierte Keywords separat embedden.
@@ -117,18 +117,12 @@ Mehrere Embeddings pro Chunk speichern: Titel/Überschrift, Hauptinhalt, extrahi
 - Gewichtung verschiedener Aspekte
 - Bessere Ergebnisse bei strukturierten Dokumenten
 
-**Implementierungsansatz:**
-```csharp
-public record MultiVectorChunk(
-    string Id,
-    string Content,
-    ReadOnlyMemory<float> ContentEmbedding,
-    ReadOnlyMemory<float>? TitleEmbedding,
-    ReadOnlyMemory<float>? KeywordEmbedding
-);
-```
+**Implementierung:**
+- [MultiVectorSearchService.cs](../src/Dojo.Rag.Api/Services/MultiVectorSearchService.cs)
+- Separate Embeddings fuer Inhalt und Tags, gewichtete Kombination
 
-**Aufwand:** Hoch - erfordert Schema-Änderung in Qdrant, neue Ingestion-Logik
+**Hinweis:**
+- Aktuell demo-spezifisch (Inhalt + Tags), kein Schema-Change in Qdrant
 
 ---
 
@@ -235,9 +229,11 @@ Führt Suche mit optionalen Verbesserungen durch.
   "enhancements": {
     "useHybridSearch": true,
     "useQueryExpansion": false,
-    "useReranking": true
+    "useReranking": true,
+    "useMultiVectorSearch": true
   },
-  "topK": 5
+  "topK": 5,
+  "minScore": 0.5
 }
 ```
 
@@ -263,7 +259,7 @@ Gibt den aktuellen Status der Demo zurück (initialisiert, Anzahl Embeddings).
 │                    VectorSearchDemo.tsx                      │
 ├─────────────────┬───────────────────┬───────────────────────┤
 │ SentenceList    │ SearchInput       │ EnhancementToggles    │
-│ (Demo-Sätze)    │ (Query-Eingabe)   │ (Hybrid, Expansion)   │
+│ (Demo-Sätze)    │ (Query + MinScore)│ (Hybrid/Expansion/...)│
 ├─────────────────┴───────────────────┴───────────────────────┤
 │                 Side-by-Side Results                         │
 │  ┌──────────────────────┬──────────────────────┐            │
@@ -272,17 +268,27 @@ Gibt den aktuellen Status der Demo zurück (initialisiert, Anzahl Embeddings).
 │  │ - Ergebnis 2 (65%)   │ - Ergebnis 2 (85%)   │            │
 │  └──────────────────────┴──────────────────────┘            │
 └─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-              ┌───────────────────────────────┐
-              │ VectorSearchDemoController    │
-              └───────────────────────────────┘
-                              │
-          ┌───────────────────┼───────────────────┐
-          ▼                   ▼                   ▼
-┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
-│ EmbeddingService│ │HybridSearchSvc  │ │QueryExpansionSvc│
-└─────────────────┘ └─────────────────┘ └─────────────────┘
+            │
+            ▼
+        ┌───────────────────────────────┐
+        │ VectorSearchDemoController    │
+        └───────────────────────────────┘
+            │
+    ┌───────────────────┼───────────────────────┐
+    ▼                   ▼                       ▼
+┌─────────────────┐ ┌─────────────────┐     ┌─────────────────────┐
+│ EmbeddingService│ │HybridSearchSvc  │     │MultiVectorSearchSvc │
+└─────────────────┘ └─────────────────┘     └─────────────────────┘
+    │                   │                       │
+    ▼                   ▼                       ▼
+  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐
+  │QueryExpansionSvc │  │MinScore Filter   │  │MinScore Filter   │
+  └──────────────────┘  └──────────────────┘  └──────────────────┘
+            │
+            ▼
+          ┌─────────────────┐
+          │ RerankingSvc    │
+          └─────────────────┘
 ```
 
 ---

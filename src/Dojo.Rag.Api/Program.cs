@@ -1,6 +1,13 @@
 using Microsoft.Extensions.AI;
+using DotNetEnv;
 using Dojo.Rag.Api.Configuration;
 using Dojo.Rag.Api.Services;
+
+var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
+if (File.Exists(envPath))
+{
+    Env.Load(envPath);
+}
 
 var builder = WebApplication.CreateBuilder(args);
 

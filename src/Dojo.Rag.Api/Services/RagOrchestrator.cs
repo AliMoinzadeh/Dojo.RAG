@@ -18,6 +18,9 @@ public class RagOrchestrator : IRagOrchestrator
     private readonly IChatClient _chatClient;
     private readonly ITokenCounterService _tokenCounter;
     private readonly IAIServiceFactory _aiServiceFactory;
+    private readonly IQueryExpansionService _queryExpansionService;
+    private readonly IHyDEService _hydeService;
+    private readonly IRerankingService _rerankingService;
     private readonly ILogger<RagOrchestrator> _logger;
 
     private const string SystemPromptTemplate = """
@@ -38,12 +41,18 @@ public class RagOrchestrator : IRagOrchestrator
         IChatClient chatClient,
         ITokenCounterService tokenCounter,
         IAIServiceFactory aiServiceFactory,
+        IQueryExpansionService queryExpansionService,
+        IHyDEService hydeService,
+        IRerankingService rerankingService,
         ILogger<RagOrchestrator> logger)
     {
         _searchService = searchService;
         _chatClient = chatClient;
         _tokenCounter = tokenCounter;
         _aiServiceFactory = aiServiceFactory;
+        _queryExpansionService = queryExpansionService;
+        _hydeService = hydeService;
+        _rerankingService = rerankingService;
         _logger = logger;
     }
 
@@ -53,10 +62,36 @@ public class RagOrchestrator : IRagOrchestrator
         var metrics = new PipelineMetricsBuilder();
         
         _logger.LogInformation("Processing chat request: {Message}", request.Message);
+
+        var enhancements = request.Enhancements ?? new RagSearchEnhancements();
+        var searchQuery = request.Message;
+
+        if (enhancements.UseQueryExpansion)
+        {
+            searchQuery = await _queryExpansionService.ExpandQueryAsync(request.Message, cancellationToken);
+        }
+
+        var embeddingInput = searchQuery;
+        if (enhancements.UseHyDE)
+        {
+            embeddingInput = await _hydeService.GenerateHypotheticalDocumentAsync(searchQuery, cancellationToken);
+        }
         
         // Step 1: Search for relevant chunks
         var searchSw = Stopwatch.StartNew();
-        var retrievedChunks = await _searchService.SearchAsync(request.Message, cancellationToken: cancellationToken);
+        var retrievedChunks = await _searchService.SearchAsync(
+            searchQuery,
+            enhancements,
+            embeddingInput,
+            cancellationToken: cancellationToken);
+
+        if (enhancements.UseReranking)
+        {
+            retrievedChunks = await RerankRetrievedChunksAsync(
+                request.Message,
+                retrievedChunks,
+                cancellationToken);
+        }
         searchSw.Stop();
         metrics.SearchTimeMs = searchSw.ElapsedMilliseconds;
         metrics.ChunksRetrieved = retrievedChunks.Count;
@@ -110,6 +145,45 @@ public class RagOrchestrator : IRagOrchestrator
             TokenUsage: tokenUsage,
             Metrics: request.IncludeDebugInfo ? metrics.Build() : null
         );
+    }
+
+    private async Task<List<RetrievedChunk>> RerankRetrievedChunksAsync(
+        string query,
+        List<RetrievedChunk> chunks,
+        CancellationToken cancellationToken)
+    {
+        if (chunks.Count == 0)
+        {
+            return chunks;
+        }
+
+        var candidates = chunks
+            .Select(chunk => new SearchResultItem(
+                chunk.Id,
+                chunk.Content,
+                chunk.SourceFileName,
+                chunk.RelevanceScore,
+                new List<string>()))
+            .ToList();
+
+        var reranked = await _rerankingService.RerankAsync(
+            query,
+            candidates,
+            candidates.Count,
+            cancellationToken);
+
+        var lookup = chunks.ToDictionary(chunk => chunk.Id, StringComparer.Ordinal);
+        var result = new List<RetrievedChunk>();
+
+        foreach (var item in reranked)
+        {
+            if (lookup.TryGetValue(item.Id, out var chunk))
+            {
+                result.Add(chunk with { RelevanceScore = item.Score });
+            }
+        }
+
+        return result;
     }
 
     private class PipelineMetricsBuilder

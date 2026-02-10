@@ -3,6 +3,7 @@
 export interface ChatRequest {
   message: string;
   includeDebugInfo?: boolean;
+  enhancements?: RagSearchEnhancements;
 }
 
 export interface ChatResponse {
@@ -37,6 +38,15 @@ export interface PipelineMetrics {
   chunksRetrieved: number;
   embeddingModel: string;
   chatModel: string;
+}
+
+export interface RagSearchEnhancements {
+  useHybridSearch: boolean;
+  useQueryExpansion: boolean;
+  useReranking: boolean;
+  useHyDE: boolean;
+  useHnswApproximate: boolean;
+  hnswEfSearch: number;
 }
 
 export interface IngestRequest {

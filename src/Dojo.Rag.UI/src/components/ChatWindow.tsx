@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Send, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
-import type { ChatResponse, RetrievedChunk, TokenUsage, PipelineMetrics } from '../types/api';
+import type { ChatResponse, RetrievedChunk, TokenUsage, PipelineMetrics, RagSearchEnhancements } from '../types/api';
 import { api } from '../lib/api';
 import { ContextWindowGauge } from './ContextWindowGauge';
 import { RelevanceScoreDisplay } from './RelevanceScoreDisplay';
@@ -20,6 +20,12 @@ export function ChatWindow() {
   const [isLoading, setIsLoading] = useState(false);
   const [expandedMessageId, setExpandedMessageId] = useState<number | null>(null);
   const [includeDebugInfo, setIncludeDebugInfo] = useState(true);
+  const [useHybridSearch, setUseHybridSearch] = useState(false);
+  const [useQueryExpansion, setUseQueryExpansion] = useState(false);
+  const [useReranking, setUseReranking] = useState(false);
+  const [useHyDE, setUseHyDE] = useState(false);
+  const [useHnswApproximate, setUseHnswApproximate] = useState(false);
+  const [hnswEfSearch, setHnswEfSearch] = useState(32);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -33,9 +39,24 @@ export function ChatWindow() {
     setError(null);
 
     try {
+      const enhancementsEnabled =
+        useHybridSearch || useQueryExpansion || useReranking || useHyDE || useHnswApproximate;
+
+      const enhancements: RagSearchEnhancements | undefined = enhancementsEnabled
+        ? {
+            useHybridSearch,
+            useQueryExpansion,
+            useReranking,
+            useHyDE,
+            useHnswApproximate,
+            hnswEfSearch,
+          }
+        : undefined;
+
       const response: ChatResponse = await api.chat({
         message: input,
         includeDebugInfo,
+        enhancements,
       });
 
       const assistantMessage: Message = {
@@ -160,6 +181,73 @@ export function ChatWindow() {
             />
             Include debug info
           </label>
+        </div>
+        <div className="mb-3">
+          <div className="text-sm font-medium text-gray-700 mb-2">Search enhancements</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-600">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={useHybridSearch}
+                onChange={(e) => setUseHybridSearch(e.target.checked)}
+                className="rounded"
+              />
+              Hybrid search
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={useQueryExpansion}
+                onChange={(e) => setUseQueryExpansion(e.target.checked)}
+                className="rounded"
+              />
+              Query expansion
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={useReranking}
+                onChange={(e) => setUseReranking(e.target.checked)}
+                className="rounded"
+              />
+              Reranking
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={useHyDE}
+                onChange={(e) => setUseHyDE(e.target.checked)}
+                className="rounded"
+              />
+              HyDE
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={useHnswApproximate}
+                onChange={(e) => setUseHnswApproximate(e.target.checked)}
+                className="rounded"
+              />
+              HNSW approximate
+            </label>
+          </div>
+          {useHnswApproximate && (
+            <div className="mt-2">
+              <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+                <span>HNSW efSearch</span>
+                <span>{hnswEfSearch}</span>
+              </div>
+              <input
+                type="range"
+                min={5}
+                max={80}
+                step={1}
+                value={hnswEfSearch}
+                onChange={(e) => setHnswEfSearch(parseInt(e.target.value, 10))}
+                className="w-full accent-blue-500"
+              />
+            </div>
+          )}
         </div>
         <div className="flex gap-2">
           <input

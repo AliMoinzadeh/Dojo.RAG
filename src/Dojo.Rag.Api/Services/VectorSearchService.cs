@@ -11,6 +11,12 @@ namespace Dojo.Rag.Api.Services;
 public interface IVectorSearchService
 {
     Task<List<RetrievedChunk>> SearchAsync(string query, int? topK = null, CancellationToken cancellationToken = default);
+    Task<List<RetrievedChunk>> SearchAsync(
+        string query,
+        RagSearchEnhancements? enhancements,
+        string? embeddingInput = null,
+        int? topK = null,
+        CancellationToken cancellationToken = default);
     Task<List<(DocumentChunk Chunk, float[] Embedding)>> GetAllChunksWithEmbeddingsAsync(int maxCount = 100, CancellationToken cancellationToken = default);
 }
 
@@ -36,42 +42,95 @@ public class VectorSearchService : IVectorSearchService
         _logger = logger;
     }
 
-    public async Task<List<RetrievedChunk>> SearchAsync(string query, int? topK = null, CancellationToken cancellationToken = default)
+    public Task<List<RetrievedChunk>> SearchAsync(string query, int? topK = null, CancellationToken cancellationToken = default)
+    {
+        return SearchAsync(query, enhancements: null, embeddingInput: null, topK: topK, cancellationToken: cancellationToken);
+    }
+
+    public async Task<List<RetrievedChunk>> SearchAsync(
+        string query,
+        RagSearchEnhancements? enhancements,
+        string? embeddingInput = null,
+        int? topK = null,
+        CancellationToken cancellationToken = default)
     {
         var k = topK ?? _ragSettings.TopK;
-        
-        _logger.LogInformation("Searching for query: {Query} with top-k: {TopK}", query, k);
-        
-        // Generate query embedding
-        var queryEmbedding = await _embeddingService.GenerateEmbeddingAsync(query, cancellationToken);
-        
-        // Get the collection for the current embedding model
+        var useHybrid = enhancements?.UseHybridSearch == true;
+        var useHnsw = enhancements?.UseHnswApproximate == true;
+        var minScore = _ragSettings.MinRelevanceScore;
+        var candidateK = k;
+
+        if (useHnsw)
+        {
+            var efSearch = Math.Max(k, enhancements?.HnswEfSearch ?? k);
+            candidateK = Math.Max(k, efSearch);
+        }
+
+        _logger.LogInformation(
+            "Searching for query: {Query} with top-k: {TopK} (candidates: {Candidates})",
+            query,
+            k,
+            candidateK);
+
+        var embeddingText = string.IsNullOrWhiteSpace(embeddingInput) ? query : embeddingInput;
+        var queryEmbedding = await _embeddingService.GenerateEmbeddingAsync(embeddingText, cancellationToken);
+
         var embeddingModel = _aiServiceFactory.GetActiveEmbeddingModel();
         var dimensions = _aiServiceFactory.GetActiveEmbeddingDimensions();
         var collection = await _vectorStoreManager.GetOrCreateCollectionAsync(embeddingModel, dimensions, cancellationToken);
-        
-        // Search for similar vectors
+
         var searchOptions = new VectorSearchOptions<DocumentChunk>();
-        
-        var results = new List<RetrievedChunk>();
-        
-        await foreach (var result in collection.SearchAsync(queryEmbedding, k, searchOptions, cancellationToken))
+        var candidates = new List<(DocumentChunk Chunk, double VectorScore)>();
+
+        await foreach (var result in collection.SearchAsync(queryEmbedding, candidateK, searchOptions, cancellationToken))
         {
-            if (result.Score >= _ragSettings.MinRelevanceScore)
+            if (result.Score >= minScore)
             {
-                results.Add(new RetrievedChunk(
-                    Id: result.Record.Id,
-                    Content: result.Record.Content,
-                    SourceFileName: result.Record.SourceFileName,
-                    ChunkIndex: result.Record.ChunkIndex,
-                    RelevanceScore: result.Score ?? 0
-                ));
+                candidates.Add((result.Record, result.Score ?? 0));
             }
         }
-        
+
+        List<RetrievedChunk> results;
+
+        if (useHybrid)
+        {
+            var queryTokens = TokenizeText(query);
+            results = candidates
+                .Select(candidate => new
+                {
+                    candidate.Chunk,
+                    CombinedScore = CombineScores(candidate.VectorScore, CalculateKeywordScore(queryTokens, candidate.Chunk.Content))
+                })
+                .Where(item => item.CombinedScore >= minScore)
+                .OrderByDescending(item => item.CombinedScore)
+                .Take(k)
+                .Select(item => new RetrievedChunk(
+                    Id: item.Chunk.Id,
+                    Content: item.Chunk.Content,
+                    SourceFileName: item.Chunk.SourceFileName,
+                    ChunkIndex: item.Chunk.ChunkIndex,
+                    RelevanceScore: item.CombinedScore
+                ))
+                .ToList();
+        }
+        else
+        {
+            results = candidates
+                .OrderByDescending(candidate => candidate.VectorScore)
+                .Take(k)
+                .Select(candidate => new RetrievedChunk(
+                    Id: candidate.Chunk.Id,
+                    Content: candidate.Chunk.Content,
+                    SourceFileName: candidate.Chunk.SourceFileName,
+                    ChunkIndex: candidate.Chunk.ChunkIndex,
+                    RelevanceScore: candidate.VectorScore
+                ))
+                .ToList();
+        }
+
         _logger.LogInformation("Found {Count} relevant chunks (min score: {MinScore})",
-            results.Count, _ragSettings.MinRelevanceScore);
-        
+            results.Count, minScore);
+
         return results;
     }
 
@@ -89,5 +148,54 @@ public class VectorSearchService : IVectorSearchService
         // For now, we rely on the chunks being stored and retrievable
         
         return results;
+    }
+
+    private static double CombineScores(double vectorScore, double keywordScore)
+    {
+        const double vectorWeight = 0.7;
+        const double keywordWeight = 0.3;
+        return (vectorScore * vectorWeight) + (keywordScore * keywordWeight);
+    }
+
+    private static double CalculateKeywordScore(HashSet<string> queryTokens, string content)
+    {
+        if (queryTokens.Count == 0)
+        {
+            return 0;
+        }
+
+        var documentTokens = TokenizeText(content);
+        var matches = 0;
+
+        foreach (var queryToken in queryTokens)
+        {
+            if (documentTokens.Contains(queryToken))
+            {
+                matches++;
+            }
+            else
+            {
+                var partialMatch = documentTokens.FirstOrDefault(token =>
+                    token.StartsWith(queryToken, StringComparison.OrdinalIgnoreCase)
+                    || queryToken.StartsWith(token, StringComparison.OrdinalIgnoreCase));
+
+                if (!string.IsNullOrWhiteSpace(partialMatch))
+                {
+                    matches++;
+                }
+            }
+        }
+
+        var score = (double)matches / queryTokens.Count;
+        return Math.Min(score, 1.0);
+    }
+
+    private static HashSet<string> TokenizeText(string text)
+    {
+        return text
+            .Split(new[] { ' ', '\n', '\r', '\t', '.', ',', ';', ':', '!', '?', '"', '\'', '(', ')', '[', ']', '{', '}', '/', '\\', '-', '_' }, StringSplitOptions.RemoveEmptyEntries)
+            .Where(token => token.Length >= 2)
+            .Select(token => token.ToLowerInvariant())
+            .ToHashSet();
     }
 }

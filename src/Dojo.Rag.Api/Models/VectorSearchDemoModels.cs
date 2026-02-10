@@ -30,7 +30,11 @@ public record SearchEnhancements(
     bool UseHybridSearch = false,
     bool UseQueryExpansion = false,
     bool UseReranking = false,
-    bool UseMultiVectorSearch = false
+    bool UseMultiVectorSearch = false,
+    bool UseContextualEmbeddings = false,
+    bool UseHyDE = false,
+    bool UseHnswApproximate = false,
+    int HnswEfSearch = 32
 );
 
 // Search request/response
@@ -52,7 +56,8 @@ public record SearchResultItem(
 public record SearchResultSet(
     List<SearchResultItem> Results,
     long SearchTimeMs,
-    string? ExpandedQuery = null // Shows what query expansion produced
+    string? ExpandedQuery = null, // Shows what query expansion produced
+    string? HypotheticalDocument = null // Shows what HyDE produced
 );
 
 public record VectorSearchDemoResponse(

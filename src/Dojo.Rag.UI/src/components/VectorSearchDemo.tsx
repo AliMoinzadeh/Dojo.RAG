@@ -23,6 +23,10 @@ export function VectorSearchDemo() {
   const [useQueryExpansion, setUseQueryExpansion] = useState(false);
   const [useReranking, setUseReranking] = useState(false);
   const [useMultiVectorSearch, setUseMultiVectorSearch] = useState(false);
+  const [useContextualEmbeddings, setUseContextualEmbeddings] = useState(false);
+  const [useHyDE, setUseHyDE] = useState(false);
+  const [useHnswApproximate, setUseHnswApproximate] = useState(false);
+  const [hnswEfSearch, setHnswEfSearch] = useState(32);
   const [minScore, setMinScore] = useState(0.5);
 
   useEffect(() => {
@@ -74,11 +78,16 @@ export function VectorSearchDemo() {
         useQueryExpansion,
         useReranking,
         useMultiVectorSearch,
+        useContextualEmbeddings,
+        useHyDE,
+        useHnswApproximate,
+        hnswEfSearch,
       };
 
       const searchResults = await api.searchDemo({
         query: query.trim(),
-        enhancements: (useHybridSearch || useQueryExpansion || useReranking || useMultiVectorSearch)
+        enhancements: (useHybridSearch || useQueryExpansion || useReranking || useMultiVectorSearch
+          || useContextualEmbeddings || useHyDE || useHnswApproximate)
           ? enhancements
           : undefined,
         topK: 5,
@@ -233,7 +242,45 @@ export function VectorSearchDemo() {
             setUseMultiVectorSearch,
             <Search className="w-4 h-4 text-purple-400" />
           )}
+          {renderToggle(
+            'Contextual Embeddings',
+            'Einbettung mit Dokumentkontext (Kategorie, Tags)',
+            useContextualEmbeddings,
+            setUseContextualEmbeddings,
+            <Lightbulb className="w-4 h-4 text-orange-400" />
+          )}
+          {renderToggle(
+            'HyDE',
+            'LLM erzeugt hypothetisches Dokument fuer die Embedding-Suche',
+            useHyDE,
+            setUseHyDE,
+            <Zap className="w-4 h-4 text-cyan-400" />
+          )}
+          {renderToggle(
+            'HNSW Approx',
+            'Approximate Search fuer schnellere Suche (Demo-Simulation)',
+            useHnswApproximate,
+            setUseHnswApproximate,
+            <Search className="w-4 h-4 text-emerald-400" />
+          )}
         </div>
+        {useHnswApproximate && (
+          <div className="mt-3">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-sm text-gray-300">HNSW efSearch (Kandidaten)</span>
+              <span className="text-xs text-gray-400">{hnswEfSearch}</span>
+            </div>
+            <input
+              type="range"
+              min={5}
+              max={50}
+              step={1}
+              value={hnswEfSearch}
+              onChange={(e) => setHnswEfSearch(parseInt(e.target.value, 10))}
+              className="w-full accent-emerald-500"
+            />
+          </div>
+        )}
       </div>
 
       {/* Search Input */}
@@ -351,6 +398,14 @@ export function VectorSearchDemo() {
                     </span>
                   </div>
                 )}
+                {results.enhancedResults.hypotheticalDocument && (
+                  <div className="mb-3 p-2 bg-cyan-900/20 border border-cyan-800 rounded text-xs">
+                    <span className="text-cyan-300">HyDE Dokument: </span>
+                    <span className="text-cyan-100">
+                      {results.enhancedResults.hypotheticalDocument}
+                    </span>
+                  </div>
+                )}
                 <div className="space-y-3">
                   {results.enhancedResults.results.map((item, idx) =>
                     renderResultItem(item, idx + 1)
@@ -419,6 +474,18 @@ export function VectorSearchDemo() {
           <p>
             <strong>Multi-Vector Search:</strong> Inhalt und Tags werden getrennt
             eingebettet und gewichtet zusammengefuehrt.
+          </p>
+          <p>
+            <strong>Contextual Embeddings:</strong> Chunks werden mit Kontext wie
+            Kategorie und Tags eingebettet, um mehr Kontext zu liefern.
+          </p>
+          <p>
+            <strong>HyDE:</strong> Ein LLM erzeugt ein hypothetisches Dokument, das
+            embedded wird, um bessere Matches fuer kurze Anfragen zu finden.
+          </p>
+          <p>
+            <strong>HNSW Approx:</strong> Approximate Search reduziert die Kandidaten
+            fuer schnellere Suche (hier als Demo-Simulation).
           </p>
         </div>
       </div>

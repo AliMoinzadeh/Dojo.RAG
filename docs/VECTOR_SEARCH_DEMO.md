@@ -127,7 +127,7 @@ Mehrere Embeddings pro Chunk speichern: Titel/Überschrift, Hauptinhalt, extrahi
 ---
 
 ### 8. Contextual Embeddings
-**Status:** 🔜 Geplant
+**Status:** ✅ Implementiert
 
 **Beschreibung:**
 Beim Embedding eines Chunks wird der Kontext (vorheriger/nächster Absatz, Dokumenttitel) mit einbezogen.
@@ -137,20 +137,17 @@ Beim Embedding eines Chunks wird der Kontext (vorheriger/nächster Absatz, Dokum
 - Bessere Disambiguation
 - Hilfreich bei kurzen Chunks
 
-**Implementierungsansatz:**
-```csharp
-string contextualText = $"Dokument: {documentTitle}\n" +
-                        $"Vorheriger Abschnitt: {previousChunkSummary}\n" +
-                        $"Inhalt: {chunkContent}";
-var embedding = await GenerateEmbeddingAsync(contextualText);
-```
+**Implementierung:**
+- Demo-Flow: Kontext-Embedding im Demo-Index (Kategorie + Tags + Text)
+- Aktivierung per Toggle `UseContextualEmbeddings`
 
-**Aufwand:** Mittel - Anpassung Ingestion Pipeline
+**Hinweis:**
+- Kontext wird im Demo als "Kategorie/Tags/Text" zusammengefuehrt
 
 ---
 
 ### 9. HyDE (Hypothetical Document Embeddings)
-**Status:** 🔜 Geplant
+**Status:** ✅ Implementiert
 
 **Beschreibung:**
 Statt die Query direkt zu embedden, generiert ein LLM zuerst ein hypothetisches Dokument, das die Antwort enthalten würde. Dieses wird dann embedded.
@@ -160,22 +157,17 @@ Statt die Query direkt zu embedden, generiert ein LLM zuerst ein hypothetisches 
 - Besser bei kurzen/vagen Queries
 - Kann fehlende Begriffe ergänzen
 
-**Implementierungsansatz:**
-```csharp
-public interface IHyDEService
-{
-    Task<string> GenerateHypotheticalDocumentAsync(
-        string query,
-        CancellationToken cancellationToken = default);
-}
-```
+**Implementierung:**
+- [HyDEService.cs](../src/Dojo.Rag.Api/Services/HyDEService.cs)
+- Demo-Flow: HyDE-Text wird embedded statt der Query
 
-**Aufwand:** Gering - ähnlich zu Query Expansion, nutzt LLM
+**Hinweis:**
+- Im UI wird der erzeugte HyDE-Text angezeigt
 
 ---
 
 ### 10. Graph-Vector Search (HNSW)
-**Status:** 🔜 Geplant
+**Status:** ✅ Implementiert (Demo-Simulation)
 
 **Beschreibung:**
 Verwendet einen graphbasierten ANN-Index (HNSW = Hierarchical Navigable Small World), um ähnliche Vektoren schneller zu finden. Die Suche ist approximativ und lässt sich ueber Parameter zwischen Recall und Geschwindigkeit steuern.
@@ -185,16 +177,12 @@ Verwendet einen graphbasierten ANN-Index (HNSW = Hierarchical Navigable Small Wo
 - Skalierbar fuer Echtzeit-Use-Cases
 - Recall/Speed-Tradeoff konfigurierbar (z. B. über `efSearch`)
 
-**Implementierungsansatz:**
-Indexierung als HNSW in der Vector-DB konfigurieren und zur Laufzeit `efSearch` (oder vergleichbar) setzen.
-```csharp
-public record HnswConfig(
-    int M = 16,
-    int EfConstruction = 200,
-    int EfSearch = 64);
-```
+**Implementierung:**
+- Demo-Flow: Approximate Candidate-Pass mit `efSearch`-Slider
+- Aktivierung per Toggle `UseHnswApproximate`
 
-**Aufwand:** Mittel - Index-Konfiguration + optionaler UI-Toggle fuer Approximation
+**Hinweis:**
+- In der Demo wird HNSW als Kandidaten-Auswahl simuliert
 
 ---
 
@@ -230,7 +218,11 @@ Führt Suche mit optionalen Verbesserungen durch.
     "useHybridSearch": true,
     "useQueryExpansion": false,
     "useReranking": true,
-    "useMultiVectorSearch": true
+    "useMultiVectorSearch": true,
+    "useContextualEmbeddings": true,
+    "useHyDE": true,
+    "useHnswApproximate": true,
+    "hnswEfSearch": 32
   },
   "topK": 5,
   "minScore": 0.5
@@ -246,6 +238,10 @@ Führt Suche mit optionalen Verbesserungen durch.
   "appliedEnhancements": { ... }
 }
 ```
+
+**Hinweis (Response):**
+- `enhancedResults.expandedQuery` zeigt die Query Expansion
+- `enhancedResults.hypotheticalDocument` zeigt den HyDE-Text
 
 ### GET /api/vectorsearchdemo/status
 Gibt den aktuellen Status der Demo zurück (initialisiert, Anzahl Embeddings).

@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using Dojo.Rag.Api.Models;
 using Dojo.Rag.Api.Services;
@@ -18,6 +19,7 @@ public class VectorSearchDemoController : ControllerBase
     private readonly IEmbeddingService _embeddingService;
     private readonly IHybridSearchService _hybridSearchService;
     private readonly IQueryExpansionService _queryExpansionService;
+    private readonly IHyDEService _hydeService;
     private readonly IRerankingService _rerankingService;
     private readonly IMultiVectorSearchService _multiVectorSearchService;
     private readonly IWebHostEnvironment _environment;
@@ -27,12 +29,14 @@ public class VectorSearchDemoController : ControllerBase
     private static DemoSentencesResponse? _cachedSentences;
     private static readonly ConcurrentDictionary<string, float[]> _sentenceEmbeddings = new();
     private static readonly ConcurrentDictionary<string, float[]> _tagEmbeddings = new();
+    private static readonly ConcurrentDictionary<string, float[]> _contextualEmbeddings = new();
     private static string? _embeddingModelUsed;
 
     public VectorSearchDemoController(
         IEmbeddingService embeddingService,
         IHybridSearchService hybridSearchService,
         IQueryExpansionService queryExpansionService,
+        IHyDEService hydeService,
         IRerankingService rerankingService,
         IMultiVectorSearchService multiVectorSearchService,
         IWebHostEnvironment environment,
@@ -41,6 +45,7 @@ public class VectorSearchDemoController : ControllerBase
         _embeddingService = embeddingService;
         _hybridSearchService = hybridSearchService;
         _queryExpansionService = queryExpansionService;
+        _hydeService = hydeService;
         _rerankingService = rerankingService;
         _multiVectorSearchService = multiVectorSearchService;
         _environment = environment;
@@ -81,6 +86,7 @@ public class VectorSearchDemoController : ControllerBase
             // Clear existing embeddings if model changed or not initialized
             _sentenceEmbeddings.Clear();
             _tagEmbeddings.Clear();
+            _contextualEmbeddings.Clear();
 
             // Generate embeddings for all sentences
             var texts = sentences.Sentences.Select(s => s.Text).ToList();
@@ -91,6 +97,11 @@ public class VectorSearchDemoController : ControllerBase
                 .ToList();
             var tagEmbeddings = await _embeddingService.GenerateEmbeddingsAsync(tagTexts, cancellationToken);
 
+            var contextualTexts = sentences.Sentences
+                .Select(BuildContextualText)
+                .ToList();
+            var contextualEmbeddings = await _embeddingService.GenerateEmbeddingsAsync(contextualTexts, cancellationToken);
+
             for (int i = 0; i < sentences.Sentences.Count; i++)
             {
                 var embeddingArray = embeddings[i].ToArray();
@@ -98,6 +109,9 @@ public class VectorSearchDemoController : ControllerBase
 
                 var tagEmbeddingArray = tagEmbeddings[i].ToArray();
                 _tagEmbeddings[sentences.Sentences[i].Id] = tagEmbeddingArray;
+
+                var contextualEmbeddingArray = contextualEmbeddings[i].ToArray();
+                _contextualEmbeddings[sentences.Sentences[i].Id] = contextualEmbeddingArray;
             }
 
             _embeddingModelUsed = "current"; // Track which model was used
@@ -152,7 +166,8 @@ public class VectorSearchDemoController : ControllerBase
 
             // Enhanced search if requested
             SearchResultSet? enhancedResults = null;
-                if (enhancements.UseHybridSearch || enhancements.UseQueryExpansion || enhancements.UseReranking || enhancements.UseMultiVectorSearch)
+                if (enhancements.UseHybridSearch || enhancements.UseQueryExpansion || enhancements.UseReranking || enhancements.UseMultiVectorSearch
+                    || enhancements.UseContextualEmbeddings || enhancements.UseHyDE || enhancements.UseHnswApproximate)
             {
                 enhancedResults = await PerformEnhancedSearchAsync(
                     request.Query,
@@ -243,17 +258,30 @@ public class VectorSearchDemoController : ControllerBase
     {
         var stopwatch = Stopwatch.StartNew();
         string? expandedQuery = null;
+        string? hypotheticalDocument = null;
         string searchQuery = query;
 
-        // Apply query expansion if enabled
         if (enhancements.UseQueryExpansion)
         {
             expandedQuery = await _queryExpansionService.ExpandQueryAsync(query, cancellationToken);
             searchQuery = expandedQuery;
         }
 
+        var embeddingInput = searchQuery;
+
+        if (enhancements.UseHyDE)
+        {
+            hypotheticalDocument = await _hydeService.GenerateHypotheticalDocumentAsync(searchQuery, cancellationToken);
+            embeddingInput = hypotheticalDocument;
+        }
+
         // Generate embedding for (possibly expanded) query
-        var queryEmbedding = await _embeddingService.GenerateEmbeddingAsync(searchQuery, cancellationToken);
+        var queryEmbedding = await _embeddingService.GenerateEmbeddingAsync(embeddingInput, cancellationToken);
+
+        var candidateSentences = ApplyHnswApproximation(sentences, searchQuery, enhancements, topK);
+        var contentEmbeddings = enhancements.UseContextualEmbeddings && !_contextualEmbeddings.IsEmpty
+            ? _contextualEmbeddings
+            : _sentenceEmbeddings;
 
         List<SearchResultItem> results;
 
@@ -262,16 +290,16 @@ public class VectorSearchDemoController : ControllerBase
             // Use hybrid search service
             results = await _hybridSearchService.SearchAsync(
                 searchQuery,
-                sentences,
-                _sentenceEmbeddings.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+                candidateSentences,
+                contentEmbeddings.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
                 queryEmbedding,
                 topK);
         }
         else if (enhancements.UseMultiVectorSearch)
         {
             results = await _multiVectorSearchService.SearchAsync(
-                sentences,
-                _sentenceEmbeddings.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+                candidateSentences,
+                contentEmbeddings.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
                 _tagEmbeddings.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
                 queryEmbedding,
                 topK);
@@ -281,9 +309,9 @@ public class VectorSearchDemoController : ControllerBase
             // Pure vector search with expanded query
             var scores = new List<(DemoSentence Sentence, double Score)>();
 
-            foreach (var sentence in sentences)
+            foreach (var sentence in candidateSentences)
             {
-                if (_sentenceEmbeddings.TryGetValue(sentence.Id, out var embedding))
+                if (contentEmbeddings.TryGetValue(sentence.Id, out var embedding))
                 {
                     var score = CosineSimilarity(queryEmbedding.Span, embedding);
                     scores.Add((sentence, score));
@@ -319,7 +347,108 @@ public class VectorSearchDemoController : ControllerBase
 
         stopwatch.Stop();
 
-        return new SearchResultSet(results, stopwatch.ElapsedMilliseconds, expandedQuery);
+        return new SearchResultSet(results, stopwatch.ElapsedMilliseconds, expandedQuery, hypotheticalDocument);
+    }
+
+    private static string BuildContextualText(DemoSentence sentence)
+    {
+        var tags = sentence.Tags.Count == 0 ? "keine" : string.Join(", ", sentence.Tags);
+        return $"Kategorie: {sentence.Category}\nTags: {tags}\nText: {sentence.Text}";
+    }
+
+    private static List<DemoSentence> ApplyHnswApproximation(
+        List<DemoSentence> sentences,
+        string query,
+        SearchEnhancements enhancements,
+        int topK)
+    {
+        if (!enhancements.UseHnswApproximate)
+        {
+            return sentences;
+        }
+
+        var efSearch = Math.Clamp(enhancements.HnswEfSearch, Math.Max(topK, 1), sentences.Count);
+        var tokens = TokenizeText(query);
+
+        if (tokens.Count == 0)
+        {
+            return SelectDeterministicSample(sentences, efSearch, query);
+        }
+
+        var ranked = sentences
+            .Select(sentence => new
+            {
+                Sentence = sentence,
+                Score = EstimateKeywordOverlap(tokens, sentence)
+            })
+            .OrderByDescending(item => item.Score)
+            .ThenBy(item => item.Sentence.Id, StringComparer.Ordinal)
+            .Take(efSearch)
+            .Select(item => item.Sentence)
+            .ToList();
+
+        if (ranked.Count == 0)
+        {
+            return SelectDeterministicSample(sentences, efSearch, query);
+        }
+
+        return ranked;
+    }
+
+    private static int EstimateKeywordOverlap(HashSet<string> tokens, DemoSentence sentence)
+    {
+        var text = sentence.Text.ToLowerInvariant();
+        var tagSet = sentence.Tags.Select(tag => tag.ToLowerInvariant()).ToHashSet();
+        var matches = 0;
+
+        foreach (var token in tokens)
+        {
+            if (text.Contains(token, StringComparison.Ordinal))
+            {
+                matches++;
+            }
+            else if (tagSet.Contains(token))
+            {
+                matches += 2;
+            }
+        }
+
+        return matches;
+    }
+
+    private static HashSet<string> TokenizeText(string text)
+    {
+        return Regex.Split(text, "\\W+")
+            .Where(token => token.Length >= 2)
+            .Select(token => token.ToLowerInvariant())
+            .ToHashSet();
+    }
+
+    private static List<DemoSentence> SelectDeterministicSample(
+        List<DemoSentence> sentences,
+        int count,
+        string query)
+    {
+        var seed = StableHash(query);
+
+        return sentences
+            .OrderBy(sentence => StableHash(sentence.Id, seed))
+            .Take(count)
+            .ToList();
+    }
+
+    private static int StableHash(string value, int seed = 17)
+    {
+        unchecked
+        {
+            var hash = seed;
+            foreach (var ch in value)
+            {
+                hash = (hash * 31) + ch;
+            }
+
+            return hash;
+        }
     }
 
     private static double CosineSimilarity(ReadOnlySpan<float> a, float[] b)

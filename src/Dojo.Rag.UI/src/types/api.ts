@@ -123,6 +123,10 @@ export interface SearchEnhancements {
   useQueryExpansion: boolean;
   useReranking: boolean;
   useMultiVectorSearch: boolean;
+  useContextualEmbeddings: boolean;
+  useHyDE: boolean;
+  useHnswApproximate: boolean;
+  hnswEfSearch: number;
 }
 
 export interface VectorSearchDemoRequest {
@@ -144,6 +148,7 @@ export interface SearchResultSet {
   results: SearchResultItem[];
   searchTimeMs: number;
   expandedQuery?: string;
+  hypotheticalDocument?: string;
 }
 
 export interface VectorSearchDemoResponse {

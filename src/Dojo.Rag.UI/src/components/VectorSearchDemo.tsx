@@ -28,6 +28,13 @@ export function VectorSearchDemo() {
   const [useHnswApproximate, setUseHnswApproximate] = useState(false);
   const [hnswEfSearch, setHnswEfSearch] = useState(32);
   const [minScore, setMinScore] = useState(0.5);
+  const hasActiveEnhancement = useHybridSearch
+    || useQueryExpansion
+    || useReranking
+    || useMultiVectorSearch
+    || useContextualEmbeddings
+    || useHyDE
+    || useHnswApproximate;
 
   useEffect(() => {
     loadSentencesAndStatus();
@@ -86,8 +93,7 @@ export function VectorSearchDemo() {
 
       const searchResults = await api.searchDemo({
         query: query.trim(),
-        enhancements: (useHybridSearch || useQueryExpansion || useReranking || useMultiVectorSearch
-          || useContextualEmbeddings || useHyDE || useHnswApproximate)
+        enhancements: hasActiveEnhancement
           ? enhancements
           : undefined,
         topK: 5,
@@ -106,20 +112,53 @@ export function VectorSearchDemo() {
     setQuery(scenarioQuery);
   };
 
+  const resetEnhancements = () => {
+    setUseHybridSearch(false);
+    setUseQueryExpansion(false);
+    setUseReranking(false);
+    setUseMultiVectorSearch(false);
+    setUseContextualEmbeddings(false);
+    setUseHyDE(false);
+    setUseHnswApproximate(false);
+  };
+
+  const toggleExclusiveEnhancement = (
+    currentValue: boolean,
+    setCurrentValue: (value: boolean) => void
+  ) => {
+    if (currentValue) {
+      setCurrentValue(false);
+      return;
+    }
+
+    resetEnhancements();
+    setCurrentValue(true);
+  };
+
+  const isToggleDisabled = (value: boolean) => hasActiveEnhancement && !value;
+
   const renderToggle = (
     label: string,
     description: string,
     value: boolean,
-    onChange: (v: boolean) => void,
-    icon: React.ReactNode
+    onToggle: () => void,
+    icon: React.ReactNode,
+    disabled = false
   ) => (
     <div
       className={`p-3 rounded-lg border cursor-pointer transition-all ${
         value
           ? 'bg-blue-900/30 border-blue-500'
+          : disabled
+          ? 'bg-gray-800/30 border-gray-700 opacity-50 cursor-not-allowed'
           : 'bg-gray-800/50 border-gray-700 hover:border-gray-600'
       }`}
-      onClick={() => onChange(!value)}
+      onClick={() => {
+        if (!disabled) {
+          onToggle();
+        }
+      }}
+      aria-disabled={disabled}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -218,52 +257,62 @@ export function VectorSearchDemo() {
             'Hybrid Search',
             'Kombiniert Vektor-Ähnlichkeit mit Keyword-Matching',
             useHybridSearch,
-            setUseHybridSearch,
-            <Search className="w-4 h-4 text-blue-400" />
+            () => toggleExclusiveEnhancement(useHybridSearch, setUseHybridSearch),
+            <Search className="w-4 h-4 text-blue-400" />,
+            isToggleDisabled(useHybridSearch)
           )}
           {renderToggle(
             'Query Expansion',
             'LLM erweitert Suchanfrage mit Synonymen',
             useQueryExpansion,
-            setUseQueryExpansion,
-            <Lightbulb className="w-4 h-4 text-yellow-400" />
+            () => toggleExclusiveEnhancement(useQueryExpansion, setUseQueryExpansion),
+            <Lightbulb className="w-4 h-4 text-yellow-400" />,
+            isToggleDisabled(useQueryExpansion)
           )}
           {renderToggle(
             'Reranking',
             'Cross-Encoder bewertet die Top-Ergebnisse neu',
             useReranking,
-            setUseReranking,
-            <Zap className="w-4 h-4 text-green-400" />
+            () => toggleExclusiveEnhancement(useReranking, setUseReranking),
+            <Zap className="w-4 h-4 text-green-400" />,
+            isToggleDisabled(useReranking)
           )}
           {renderToggle(
             'Multi-Vector Search',
             'Separate Embeddings fuer Inhalt und Tags',
             useMultiVectorSearch,
-            setUseMultiVectorSearch,
-            <Search className="w-4 h-4 text-purple-400" />
+            () => toggleExclusiveEnhancement(useMultiVectorSearch, setUseMultiVectorSearch),
+            <Search className="w-4 h-4 text-purple-400" />,
+            isToggleDisabled(useMultiVectorSearch)
           )}
           {renderToggle(
             'Contextual Embeddings',
             'Einbettung mit Dokumentkontext (Kategorie, Tags)',
             useContextualEmbeddings,
-            setUseContextualEmbeddings,
-            <Lightbulb className="w-4 h-4 text-orange-400" />
+            () => toggleExclusiveEnhancement(useContextualEmbeddings, setUseContextualEmbeddings),
+            <Lightbulb className="w-4 h-4 text-orange-400" />,
+            isToggleDisabled(useContextualEmbeddings)
           )}
           {renderToggle(
             'HyDE',
             'LLM erzeugt hypothetisches Dokument fuer die Embedding-Suche',
             useHyDE,
-            setUseHyDE,
-            <Zap className="w-4 h-4 text-cyan-400" />
+            () => toggleExclusiveEnhancement(useHyDE, setUseHyDE),
+            <Zap className="w-4 h-4 text-cyan-400" />,
+            isToggleDisabled(useHyDE)
           )}
           {renderToggle(
             'HNSW Approx',
             'Approximate Search fuer schnellere Suche (Demo-Simulation)',
             useHnswApproximate,
-            setUseHnswApproximate,
-            <Search className="w-4 h-4 text-emerald-400" />
+            () => toggleExclusiveEnhancement(useHnswApproximate, setUseHnswApproximate),
+            <Search className="w-4 h-4 text-emerald-400" />,
+            isToggleDisabled(useHnswApproximate)
           )}
         </div>
+        <p className="mt-3 text-xs text-gray-500">
+          Es kann immer nur eine Verbesserung gleichzeitig aktiv sein.
+        </p>
         {useHnswApproximate && (
           <div className="mt-3">
             <div className="flex items-center justify-between mb-1">

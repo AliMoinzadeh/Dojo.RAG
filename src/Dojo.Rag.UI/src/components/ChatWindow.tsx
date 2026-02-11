@@ -14,17 +14,21 @@ interface Message {
   metrics?: PipelineMetrics;
 }
 
+type SearchEnhancementOption =
+  | 'none'
+  | 'hybrid'
+  | 'queryExpansion'
+  | 'reranking'
+  | 'hyde'
+  | 'hnswApproximate';
+
 export function ChatWindow() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [expandedMessageId, setExpandedMessageId] = useState<number | null>(null);
   const [includeDebugInfo, setIncludeDebugInfo] = useState(true);
-  const [useHybridSearch, setUseHybridSearch] = useState(false);
-  const [useQueryExpansion, setUseQueryExpansion] = useState(false);
-  const [useReranking, setUseReranking] = useState(false);
-  const [useHyDE, setUseHyDE] = useState(false);
-  const [useHnswApproximate, setUseHnswApproximate] = useState(false);
+  const [selectedEnhancement, setSelectedEnhancement] = useState<SearchEnhancementOption>('none');
   const [hnswEfSearch, setHnswEfSearch] = useState(32);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,16 +43,13 @@ export function ChatWindow() {
     setError(null);
 
     try {
-      const enhancementsEnabled =
-        useHybridSearch || useQueryExpansion || useReranking || useHyDE || useHnswApproximate;
-
-      const enhancements: RagSearchEnhancements | undefined = enhancementsEnabled
+      const enhancements: RagSearchEnhancements | undefined = selectedEnhancement !== 'none'
         ? {
-            useHybridSearch,
-            useQueryExpansion,
-            useReranking,
-            useHyDE,
-            useHnswApproximate,
+            useHybridSearch: selectedEnhancement === 'hybrid',
+            useQueryExpansion: selectedEnhancement === 'queryExpansion',
+            useReranking: selectedEnhancement === 'reranking',
+            useHyDE: selectedEnhancement === 'hyde',
+            useHnswApproximate: selectedEnhancement === 'hnswApproximate',
             hnswEfSearch,
           }
         : undefined;
@@ -187,51 +188,66 @@ export function ChatWindow() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-600">
             <label className="flex items-center gap-2">
               <input
-                type="checkbox"
-                checked={useHybridSearch}
-                onChange={(e) => setUseHybridSearch(e.target.checked)}
-                className="rounded"
+                type="radio"
+                name="searchEnhancement"
+                value="none"
+                checked={selectedEnhancement === 'none'}
+                onChange={() => setSelectedEnhancement('none')}
+              />
+              None
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="searchEnhancement"
+                value="hybrid"
+                checked={selectedEnhancement === 'hybrid'}
+                onChange={() => setSelectedEnhancement('hybrid')}
               />
               Hybrid search
             </label>
             <label className="flex items-center gap-2">
               <input
-                type="checkbox"
-                checked={useQueryExpansion}
-                onChange={(e) => setUseQueryExpansion(e.target.checked)}
-                className="rounded"
+                type="radio"
+                name="searchEnhancement"
+                value="queryExpansion"
+                checked={selectedEnhancement === 'queryExpansion'}
+                onChange={() => setSelectedEnhancement('queryExpansion')}
               />
               Query expansion
             </label>
             <label className="flex items-center gap-2">
               <input
-                type="checkbox"
-                checked={useReranking}
-                onChange={(e) => setUseReranking(e.target.checked)}
-                className="rounded"
+                type="radio"
+                name="searchEnhancement"
+                value="reranking"
+                checked={selectedEnhancement === 'reranking'}
+                onChange={() => setSelectedEnhancement('reranking')}
               />
               Reranking
             </label>
             <label className="flex items-center gap-2">
               <input
-                type="checkbox"
-                checked={useHyDE}
-                onChange={(e) => setUseHyDE(e.target.checked)}
-                className="rounded"
+                type="radio"
+                name="searchEnhancement"
+                value="hyde"
+                checked={selectedEnhancement === 'hyde'}
+                onChange={() => setSelectedEnhancement('hyde')}
               />
               HyDE
             </label>
             <label className="flex items-center gap-2">
               <input
-                type="checkbox"
-                checked={useHnswApproximate}
-                onChange={(e) => setUseHnswApproximate(e.target.checked)}
-                className="rounded"
+                type="radio"
+                name="searchEnhancement"
+                value="hnswApproximate"
+                checked={selectedEnhancement === 'hnswApproximate'}
+                onChange={() => setSelectedEnhancement('hnswApproximate')}
               />
               HNSW approximate
             </label>
           </div>
-          {useHnswApproximate && (
+          {selectedEnhancement === 'hnswApproximate' && (
             <div className="mt-2">
               <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
                 <span>HNSW efSearch</span>

@@ -289,6 +289,18 @@ style: |
   section.section::after {
     display: none;
   }
+
+  .mermaid-diagram {
+    margin: 0.8em 0;
+    text-align: center;
+  }
+
+  .mermaid-diagram img {
+    max-width: 100%;
+    max-height: 440px;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  }
 ---
 
 # Retrieval-Augmented Generation (RAG)
@@ -334,17 +346,11 @@ style: |
 
 # RAG-Architektur-Überblick
 
-```
-┌─────────────┐    ┌─────────────┐     ┌─────────────┐
-│   Nutzer    │    │   Vektor    │     │   LLM       │
-│   Anfrage   │──▶│   Suche     │───▶│   Generier. │
-└─────────────┘    └─────────────┘     └─────────────┘
-                          │
-                          ▼
-                   ┌─────────────┐
-                   │  Abgerufene │
-                   │  Dokumente  │
-                   └─────────────┘
+```mermaid
+flowchart LR
+  U["Nutzer<br/>Anfrage"] --> V["Vektor<br/>Suche"]
+  V --> L["LLM<br/>Generierung"]
+  V --> D["Abgerufene<br/>Dokumente"]
 ```
 
 ---
@@ -388,16 +394,18 @@ style: |
 
 # Chunking: Die Überlappungsstrategie
 
-```
-Dokument: "The quick brown fox jumps over the lazy dog."
+```mermaid
+flowchart TB
+  D["Dokument<br/>The quick brown fox jumps over the lazy dog."]
+  C1["Chunk 1<br/>The quick brown fox"]
+  C2["Chunk 2<br/>fox jumps over the"]
+  C3["Chunk 3<br/>the lazy dog"]
 
-Chunk-Größe: 20 Zeichen | Überlappung: 5 Zeichen
-
-Chunk 1: "The quick brown fox "
-Chunk 2: " fox jumps over the "
-Chunk 3: " the lazy dog."
-         ↑↑↑↑↑
-        Überlappung erhält Kontext
+  D --> C1
+  D --> C2
+  D --> C3
+  C1 -. "Überlappung: fox" .-> C2
+  C2 -. "Überlappung: the" .-> C3
 ```
 
 > **Faustregel**: 10-20% Überlappung verhindert Kontextverlust an Chunk-Grenzen
@@ -514,20 +522,11 @@ Bereich: -1 bis 1 (1 = identisch)
 
 # Schritt 4: Der Query-Prozess
 
-```
-Nutzer: "How do I make espresso?"
-          │
-          ▼
-┌──────────────────────────────────────┐
-│  1. Query embedden                   │
-│     → [0.12, -0.45, 0.78, ...]       │
-├──────────────────────────────────────┤
-│  2. Vektordatenbank durchsuchen      │
-│     → Top K ähnliche Chunks          │
-├──────────────────────────────────────┤
-│  3. Nach Relevanz-Score ranken       │
-│     → Unterhalb Schwelle filtern     │
-└──────────────────────────────────────┘
+```mermaid
+flowchart TB
+  Q["Nutzer: How do I make espresso?"] --> E["1. Query embedden<br/>→ [0.12, -0.45, 0.78, ...]"]
+  E --> S["2. Vektordatenbank durchsuchen<br/>→ Top K ähnliche Chunks"]
+  S --> R["3. Nach Relevanz-Score ranken<br/>→ Unterhalb Schwelle filtern"]
 ```
 
 ---
@@ -657,28 +656,27 @@ documents_text-embedding-3-small ← OpenAI-Embeddings
 
 # Demo-Architektur
 
-```
-┌─────────────────────────────────────────────────┐
-│                  React Frontend                 │
-│  ┌─────────┐ ┌─────────┐ ┌─────────────────┐    │
-│  │ Chat UI │ │ Config  │ │ Pipeline Viewer │    │
-│  └─────────┘ └─────────┘ └─────────────────┘    │
-└─────────────────────┬───────────────────────────┘
-                      │ HTTP/REST
-┌─────────────────────▼───────────────────────────┐
-│               .NET 9 Web API                    │
-│  ┌──────────────────────────────────────────┐   │
-│  │           RAG Orchestrator               │   │
-│  │  ┌─────────┐ ┌────────┐ ┌────────────┐   │   │
-│  │  │ Chunker │ │Embedder│ │ VectorStore│   │   │
-│  │  └─────────┘ └────────┘ └────────────┘   │   │
-│  └──────────────────────────────────────────┘   │
-└─────────────────────┬───────────────────────────┘
-            ┌─────────┴──────────┐
-      ┌─────▼─────┐       ┌──────▼──────┐
-      │  Ollama   │       │   Qdrant    │
-      │  (lokal)  │       │  (Vektoren) │
-      └───────────┘       └─────────────┘
+```mermaid
+flowchart TB
+  subgraph FE["React Frontend"]
+    UI["Chat UI"]
+    CFG["Config"]
+    PV["Pipeline Viewer"]
+  end
+
+  subgraph API[".NET 9 Web API"]
+    ORCH["RAG Orchestrator"]
+    CH["Chunker"]
+    EMB["Embedder"]
+    VS["Vector Store"]
+    ORCH --> CH
+    ORCH --> EMB
+    ORCH --> VS
+  end
+
+  FE -->|"HTTP/REST"| API
+  API --> OL["Ollama (lokal)"]
+  API --> QD["Qdrant (Vektoren)"]
 ```
 
 ---

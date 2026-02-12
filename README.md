@@ -177,19 +177,21 @@ Switch between embedding models and see how collections are managed.
 
 ## 📊 Presentation
 
-The Marp presentation is in `docs/presentation.md`. To view:
+Presentations are authored in Markdown (for example `docs/presentation.de.md`).
 
-1. Install [Marp CLI](https://github.com/marp-team/marp-cli):
-   ```bash
-   npm install -g @marp-team/marp-cli
-   ```
+Generate HTML (including Mermaid diagrams) with:
 
-2. Generate HTML:
-   ```bash
-   marp docs/presentation.md -o docs/presentation.html
-   ```
+```powershell
+.\scripts\build-presentation.ps1
+```
 
-3. Or use VS Code with the [Marp extension](https://marketplace.visualstudio.com/items?itemName=marp-team.marp-vscode)
+Custom input/output:
+
+```powershell
+.\scripts\build-presentation.ps1 -InputPath docs/presentation.md -OutputPath docs/presentation.html
+```
+
+The script uses `npx` to run `@mermaid-js/mermaid-cli` and `@marp-team/marp-cli`, so no global installs are required.
 
 ## 🧪 Sample Queries
 

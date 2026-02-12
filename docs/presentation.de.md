@@ -347,10 +347,34 @@ style: |
 # RAG-Architektur-Überblick
 
 ```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#313244', 'primaryTextColor': '#cdd6f4', 'lineColor': '#6c7086', 'fontSize': '18px'}}}%%
 flowchart LR
-  U["Nutzer<br/>Anfrage"] --> V["Vektor<br/>Suche"]
-  V --> L["LLM<br/>Generierung"]
-  V --> D["Abgerufene<br/>Dokumente"]
+  U(["Nutzer-Anfrage"])
+  E["Embedding"]
+  S["Vektor-Suche"]
+  DB[("Dokument-Store")]
+  LLM["LLM-Generierung"]
+  A(["Fundierte Antwort"])
+
+  U --> E --> S
+  DB -.->|"relevante Chunks"| S
+  S -->|"Kontext + Frage"| LLM --> A
+
+  classDef input fill:#89b4fa,color:#1e1e2e,stroke:none,font-weight:bold
+  classDef embed fill:#74c7ec,color:#1e1e2e,stroke:none,font-weight:bold
+  classDef search fill:#a6e3a1,color:#1e1e2e,stroke:none,font-weight:bold
+  classDef store fill:#f9e2af,color:#1e1e2e,stroke:none,font-weight:bold
+  classDef llm fill:#cba6f7,color:#1e1e2e,stroke:none,font-weight:bold
+  classDef output fill:#f38ba8,color:#1e1e2e,stroke:none,font-weight:bold
+
+  class U input
+  class E embed
+  class S search
+  class DB store
+  class LLM llm
+  class A output
+
+  linkStyle default stroke:#585b70,stroke-width:2px
 ```
 
 ---
@@ -395,17 +419,31 @@ flowchart LR
 # Chunking: Die Überlappungsstrategie
 
 ```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#313244', 'primaryTextColor': '#cdd6f4', 'lineColor': '#6c7086', 'fontSize': '16px'}}}%%
 flowchart TB
-  D["Dokument<br/>The quick brown fox jumps over the lazy dog."]
-  C1["Chunk 1<br/>The quick brown fox"]
-  C2["Chunk 2<br/>fox jumps over the"]
-  C3["Chunk 3<br/>the lazy dog"]
+  D["<b>Dokument</b><br/><i>The quick brown fox jumps over the lazy dog.</i>"]
 
-  D --> C1
-  D --> C2
-  D --> C3
-  C1 -. "Überlappung: fox" .-> C2
-  C2 -. "Überlappung: the" .-> C3
+  D --> C1 & C2 & C3
+
+  C1["<b>Chunk 1</b> — The quick brown <b>fox</b>"]
+  C2["<b>Chunk 2</b> — <b>fox</b> jumps over <b>the</b>"]
+  C3["<b>Chunk 3</b> — <b>the</b> lazy dog"]
+
+  C1 -.-|"Überlappung: <b>fox</b>"| C2
+  C2 -.-|"Überlappung: <b>the</b>"| C3
+
+  classDef doc fill:#89b4fa,color:#1e1e2e,stroke:none,font-weight:bold
+  classDef c1 fill:#313244,color:#cdd6f4,stroke:#a6e3a1,stroke-width:2px
+  classDef c2 fill:#313244,color:#cdd6f4,stroke:#f9e2af,stroke-width:2px
+  classDef c3 fill:#313244,color:#cdd6f4,stroke:#f38ba8,stroke-width:2px
+
+  class D doc
+  class C1 c1
+  class C2 c2
+  class C3 c3
+
+  linkStyle 0,1,2 stroke:#585b70,stroke-width:2px
+  linkStyle 3,4 stroke:#f9e2af,stroke-width:2px,stroke-dasharray:6
 ```
 
 > **Faustregel**: 10-20% Überlappung verhindert Kontextverlust an Chunk-Grenzen
@@ -523,10 +561,26 @@ Bereich: -1 bis 1 (1 = identisch)
 # Schritt 4: Der Query-Prozess
 
 ```mermaid
-flowchart TB
-  Q["Nutzer: How do I make espresso?"] --> E["1. Query embedden<br/>→ [0.12, -0.45, 0.78, ...]"]
-  E --> S["2. Vektordatenbank durchsuchen<br/>→ Top K ähnliche Chunks"]
-  S --> R["3. Nach Relevanz-Score ranken<br/>→ Unterhalb Schwelle filtern"]
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#313244', 'primaryTextColor': '#cdd6f4', 'lineColor': '#6c7086', 'fontSize': '16px'}}}%%
+flowchart LR
+  Q(["How do I make espresso?"])
+  E["Query embedden<br/><code>[0.12, -0.45, 0.78, …]</code>"]
+  S[("Vektordatenbank<br/>Top K Chunks")]
+  R["Relevanz-Ranking<br/>& Filterung"]
+
+  Q --> E --> S --> R
+
+  classDef query fill:#89b4fa,color:#1e1e2e,stroke:none,font-weight:bold
+  classDef embed fill:#74c7ec,color:#1e1e2e,stroke:none,font-weight:bold
+  classDef search fill:#f9e2af,color:#1e1e2e,stroke:none,font-weight:bold
+  classDef rank fill:#a6e3a1,color:#1e1e2e,stroke:none,font-weight:bold
+
+  class Q query
+  class E embed
+  class S search
+  class R rank
+
+  linkStyle default stroke:#585b70,stroke-width:2px
 ```
 
 ---
@@ -657,26 +711,43 @@ documents_text-embedding-3-small ← OpenAI-Embeddings
 # Demo-Architektur
 
 ```mermaid
-flowchart TB
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#313244', 'primaryTextColor': '#cdd6f4', 'lineColor': '#6c7086', 'fontSize': '16px'}}}%%
+flowchart LR
   subgraph FE["React Frontend"]
+    direction TB
     UI["Chat UI"]
     CFG["Config"]
     PV["Pipeline Viewer"]
   end
 
   subgraph API[".NET 9 Web API"]
+    direction TB
     ORCH["RAG Orchestrator"]
     CH["Chunker"]
     EMB["Embedder"]
     VS["Vector Store"]
-    ORCH --> CH
-    ORCH --> EMB
-    ORCH --> VS
+    ORCH --> CH & EMB & VS
   end
 
-  FE -->|"HTTP/REST"| API
-  API --> OL["Ollama (lokal)"]
-  API --> QD["Qdrant (Vektoren)"]
+  FE ==>|"HTTP / REST"| API
+  ORCH -->|"LLM"| OL
+  EMB -->|"Embed"| OL
+  VS -->|"Vektoren"| QD
+
+  OL[("Ollama — lokal")]
+  QD[("Qdrant — Vektoren")]
+
+  classDef fe fill:#89b4fa,color:#1e1e2e,stroke:none,font-weight:bold
+  classDef api fill:#a6e3a1,color:#1e1e2e,stroke:none,font-weight:bold
+  classDef orch fill:#cba6f7,color:#1e1e2e,stroke:none,font-weight:bold
+  classDef ext fill:#f9e2af,color:#1e1e2e,stroke:none,font-weight:bold
+
+  class UI,CFG,PV fe
+  class CH,EMB,VS api
+  class ORCH orch
+  class OL,QD ext
+
+  linkStyle default stroke:#585b70,stroke-width:2px
 ```
 
 ---

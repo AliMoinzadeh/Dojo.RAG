@@ -95,8 +95,74 @@ style: |
     background: transparent;
     border: none;
     padding: 0;
-    font-size: 0.8em;
+    font-size: 0.9em;
     line-height: 1.5;
+    color: #cdd6f4;
+  }
+
+  /* Highlight.js (Marp) token colors – ensure high contrast on dark slides */
+  .hljs {
+    color: #cdd6f4;
+    background: transparent;
+  }
+
+  .hljs-comment,
+  .hljs-quote {
+    color: #6c7086;
+    font-style: italic;
+  }
+
+  .hljs-keyword,
+  .hljs-selector-tag,
+  .hljs-built_in,
+  .hljs-doctag,
+  .hljs-meta {
+    color: #cba6f7;
+    font-weight: 600;
+  }
+
+  .hljs-string,
+  .hljs-regexp,
+  .hljs-symbol,
+  .hljs-bullet {
+    color: #a6e3a1;
+  }
+
+  .hljs-title,
+  .hljs-section,
+  .hljs-function,
+  .hljs-attr {
+    color: #74c7ec;
+    font-weight: 600;
+  }
+
+  .hljs-type,
+  .hljs-class,
+  .hljs-name {
+    color: #89b4fa;
+  }
+
+  .hljs-number,
+  .hljs-literal {
+    color: #fab387;
+  }
+
+  .hljs-variable,
+  .hljs-template-variable,
+  .hljs-params {
+    color: #f5c2e7;
+  }
+
+  .hljs-subst {
+    color: #cdd6f4;
+  }
+
+  .hljs-emphasis {
+    font-style: italic;
+  }
+
+  .hljs-strong {
+    font-weight: 700;
   }
 
   /* ===== LINKS ===== */

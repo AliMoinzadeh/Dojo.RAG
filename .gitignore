@@ -47,6 +47,7 @@ bld/
 .vs/
 *.code-workspace
 launchSettings.json
+!src/Dojo.Rag.Api/Properties/launchSettings.json
 
 # Rider
 .idea/

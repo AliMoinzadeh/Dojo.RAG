@@ -55,7 +55,7 @@ public class EmbeddingsController : ControllerBase
             {
                 var (x, y) = SimpleProject(embedding);
                 points.Add(new EmbeddingPoint(
-                    Id: chunk.Id,
+                    Id: chunk.Id.ToString(),
                     TextPreview: chunk.Content.Length > 100 ? chunk.Content[..100] + "..." : chunk.Content,
                     SourceFile: chunk.SourceFileName,
                     X: x,

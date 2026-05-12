@@ -105,7 +105,7 @@ public class VectorSearchService : IVectorSearchService
                 .OrderByDescending(item => item.CombinedScore)
                 .Take(k)
                 .Select(item => new RetrievedChunk(
-                    Id: item.Chunk.Id,
+                    Id: item.Chunk.Id.ToString(),
                     Content: item.Chunk.Content,
                     SourceFileName: item.Chunk.SourceFileName,
                     ChunkIndex: item.Chunk.ChunkIndex,
@@ -119,7 +119,7 @@ public class VectorSearchService : IVectorSearchService
                 .OrderByDescending(candidate => candidate.VectorScore)
                 .Take(k)
                 .Select(candidate => new RetrievedChunk(
-                    Id: candidate.Chunk.Id,
+                    Id: candidate.Chunk.Id.ToString(),
                     Content: candidate.Chunk.Content,
                     SourceFileName: candidate.Chunk.SourceFileName,
                     ChunkIndex: candidate.Chunk.ChunkIndex,

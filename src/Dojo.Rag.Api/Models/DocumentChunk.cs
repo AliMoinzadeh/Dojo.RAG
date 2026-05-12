@@ -9,7 +9,7 @@ namespace Dojo.Rag.Api.Models;
 public class DocumentChunk
 {
     [VectorStoreKey]
-    public string Id { get; set; } = Guid.NewGuid().ToString();
+    public Guid Id { get; set; } = Guid.NewGuid();
     
     [VectorStoreData(IsIndexed = true)]
     public string SourceDocument { get; set; } = string.Empty;
@@ -30,7 +30,7 @@ public class DocumentChunk
     public int EndCharIndex { get; set; }
     
     [VectorStoreData]
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     
     [VectorStoreVector(Dimensions: 1536, DistanceFunction = DistanceFunction.CosineSimilarity)]
     public ReadOnlyMemory<float>? Embedding { get; set; }
@@ -52,7 +52,7 @@ public static class DocumentChunkFactory
     {
         return new DocumentChunk
         {
-            Id = Guid.NewGuid().ToString(),
+            Id = Guid.NewGuid(),
             Content = content,
             SourceDocument = sourceDocument,
             SourceFileName = sourceFileName,
@@ -60,7 +60,7 @@ public static class DocumentChunkFactory
             StartCharIndex = startCharIndex,
             EndCharIndex = endCharIndex,
             Embedding = embedding,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow
         };
     }
 }

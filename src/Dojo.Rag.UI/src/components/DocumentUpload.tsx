@@ -13,7 +13,7 @@ export function DocumentUpload({ onIngestComplete }: Props) {
   const [lastResult, setLastResult] = useState<IngestResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const handleFile = async (file: File) => {
+  const handleFile = useCallback(async (file: File) => {
     if (!file.name.endsWith('.txt') && !file.name.endsWith('.md')) {
       setError('Only .txt and .md files are supported');
       return;
@@ -37,7 +37,7 @@ export function DocumentUpload({ onIngestComplete }: Props) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [onIngestComplete]);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -57,7 +57,7 @@ export function DocumentUpload({ onIngestComplete }: Props) {
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       handleFile(e.dataTransfer.files[0]);
     }
-  }, []);
+  }, [handleFile]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();

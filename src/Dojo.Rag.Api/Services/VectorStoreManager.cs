@@ -15,7 +15,7 @@ namespace Dojo.Rag.Api.Services;
 /// </summary>
 public interface IVectorStoreManager
 {
-    Task<VectorStoreCollection<string, DocumentChunk>> GetOrCreateCollectionAsync(
+    Task<VectorStoreCollection<Guid, DocumentChunk>> GetOrCreateCollectionAsync(
         string embeddingModel, int dimensions, CancellationToken cancellationToken = default);
     Task<IEnumerable<CollectionInfo>> ListCollectionsAsync(CancellationToken cancellationToken = default);
     Task<bool> CollectionExistsAsync(string embeddingModel, CancellationToken cancellationToken = default);
@@ -30,7 +30,7 @@ public class VectorStoreManager : IVectorStoreManager
     private readonly VectorStoreSettings _settings;
     private readonly IAIServiceFactory _aiServiceFactory;
     private readonly ILogger<VectorStoreManager> _logger;
-    private readonly Dictionary<string, VectorStoreCollection<string, DocumentChunk>> _collections = new();
+    private readonly Dictionary<string, VectorStoreCollection<Guid, DocumentChunk>> _collections = new();
     private readonly Dictionary<string, (string Model, int Dimensions)> _collectionMetadata = new();
     private readonly object _lock = new();
     
@@ -83,7 +83,7 @@ public class VectorStoreManager : IVectorStoreManager
         return $"documents_{sanitized}";
     }
 
-    public async Task<VectorStoreCollection<string, DocumentChunk>> GetOrCreateCollectionAsync(
+    public async Task<VectorStoreCollection<Guid, DocumentChunk>> GetOrCreateCollectionAsync(
         string embeddingModel, int dimensions, CancellationToken cancellationToken = default)
     {
         var collectionName = GetCollectionName(embeddingModel);
@@ -99,10 +99,12 @@ public class VectorStoreManager : IVectorStoreManager
         _logger.LogInformation("Creating collection {CollectionName} for model {Model} with {Dimensions} dimensions",
             collectionName, embeddingModel, dimensions);
 
-        VectorStoreCollection<string, DocumentChunk> collection = _settings.Provider switch
+        var definition = CreateCollectionDefinition(dimensions);
+
+        VectorStoreCollection<Guid, DocumentChunk> collection = _settings.Provider switch
         {
-            "InMemory" => _inMemoryStore!.GetCollection<string, DocumentChunk>(collectionName),
-            "Qdrant" => _qdrantStore!.GetCollection<string, DocumentChunk>(collectionName),
+            "InMemory" => _inMemoryStore!.GetCollection<Guid, DocumentChunk>(collectionName, definition),
+            "Qdrant" => _qdrantStore!.GetCollection<Guid, DocumentChunk>(collectionName, definition),
             _ => throw new ArgumentException($"Unknown vector store provider: {_settings.Provider}")
         };
 
@@ -115,6 +117,28 @@ public class VectorStoreManager : IVectorStoreManager
         }
 
         return collection;
+    }
+
+    private static VectorStoreCollectionDefinition CreateCollectionDefinition(int dimensions)
+    {
+        return new VectorStoreCollectionDefinition
+        {
+            Properties =
+            [
+                new VectorStoreKeyProperty(nameof(DocumentChunk.Id), typeof(Guid)),
+                new VectorStoreDataProperty(nameof(DocumentChunk.SourceDocument), typeof(string)) { IsIndexed = true },
+                new VectorStoreDataProperty(nameof(DocumentChunk.SourceFileName), typeof(string)) { IsIndexed = true },
+                new VectorStoreDataProperty(nameof(DocumentChunk.Content), typeof(string)) { IsFullTextIndexed = true },
+                new VectorStoreDataProperty(nameof(DocumentChunk.ChunkIndex), typeof(int)),
+                new VectorStoreDataProperty(nameof(DocumentChunk.StartCharIndex), typeof(int)),
+                new VectorStoreDataProperty(nameof(DocumentChunk.EndCharIndex), typeof(int)),
+                new VectorStoreDataProperty(nameof(DocumentChunk.CreatedAt), typeof(DateTimeOffset)),
+                new VectorStoreVectorProperty(nameof(DocumentChunk.Embedding), typeof(ReadOnlyMemory<float>), dimensions)
+                {
+                    DistanceFunction = DistanceFunction.CosineSimilarity
+                }
+            ]
+        };
     }
 
     public Task<IEnumerable<CollectionInfo>> ListCollectionsAsync(CancellationToken cancellationToken = default)
@@ -166,7 +190,7 @@ public class VectorStoreManager : IVectorStoreManager
     {
         _logger.LogInformation("Deleting collection {CollectionName}", collectionName);
         
-        VectorStoreCollection<string, DocumentChunk>? collection = null;
+        VectorStoreCollection<Guid, DocumentChunk>? collection = null;
         
         lock (_lock)
         {
@@ -188,7 +212,7 @@ public class VectorStoreManager : IVectorStoreManager
                     case "InMemory":
                         // InMemory collections are already removed from our dictionary
                         // Re-getting and deleting ensures the underlying store is cleared
-                        var inMemoryCol = _inMemoryStore!.GetCollection<string, DocumentChunk>(collectionName);
+                        var inMemoryCol = _inMemoryStore!.GetCollection<Guid, DocumentChunk>(collectionName);
                         await inMemoryCol.EnsureCollectionDeletedAsync(cancellationToken);
                         break;
                     case "Qdrant":

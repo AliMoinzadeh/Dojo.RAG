@@ -167,22 +167,33 @@ Statt die Query direkt zu embedden, generiert ein LLM zuerst ein hypothetisches 
 ---
 
 ### 10. Graph-Vector Search (HNSW)
-**Status:** ✅ Implementiert (Demo-Simulation)
+**Status:** ✅ Standard in Qdrant — Demo-Toggle visualisiert nur den `efSearch`-Tradeoff
 
 **Beschreibung:**
-Verwendet einen graphbasierten ANN-Index (HNSW = Hierarchical Navigable Small World), um ähnliche Vektoren schneller zu finden. Die Suche ist approximativ und lässt sich ueber Parameter zwischen Recall und Geschwindigkeit steuern.
+HNSW (Hierarchical Navigable Small World) ist ein **graphbasierter ANN-Index**
+(Approximate Nearest Neighbor). Vektoren werden in mehrschichtigen Graphen
+miteinander verknüpft; die Suche springt von Knoten zu Knoten und nähert sich
+in O(log N) den ähnlichsten Vektoren an, statt alle N Vektoren linear zu
+vergleichen.
+
+> **Wichtig:** HNSW ist in **Qdrant immer aktiv** — es ist nicht optional.
+> Sobald wir gegen Qdrant suchen, läuft die Anfrage durch den HNSW-Index.
+> Der Toggle `UseHnswApproximate` in dieser Demo schaltet HNSW also nicht
+> ein oder aus, sondern variiert nur den Parameter `efSearch`, um den
+> Recall/Speed-Tradeoff für die Zuhörer sichtbar zu machen.
 
 **Vorteile:**
-- Deutlich schnellere Suche bei grossen Datenmengen
-- Skalierbar fuer Echtzeit-Use-Cases
-- Recall/Speed-Tradeoff konfigurierbar (z. B. über `efSearch`)
+- Deutlich schnellere Suche bei großen Datenmengen (sub-linear statt linear)
+- Skalierbar für Echtzeit-Use-Cases (Milliarden von Vektoren)
+- Recall/Speed-Tradeoff konfigurierbar über `efSearch` (höher = genauer, langsamer)
 
 **Implementierung:**
 - Demo-Flow: Approximate Candidate-Pass mit `efSearch`-Slider
-- Aktivierung per Toggle `UseHnswApproximate`
+- Aktivierung per Toggle `UseHnswApproximate` (Demo-Visualisierung)
 
-**Hinweis:**
-- In der Demo wird HNSW als Kandidaten-Auswahl simuliert
+**Hinweis für den Vortrag:**
+- Beim Erklären klarmachen, dass HNSW *immer* unter der Haube läuft.
+  Der Slider demonstriert nur, wie sich der Such-Tradeoff anfühlt.
 
 ---
 

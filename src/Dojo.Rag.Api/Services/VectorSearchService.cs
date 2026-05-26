@@ -16,6 +16,7 @@ public interface IVectorSearchService
         RagSearchEnhancements? enhancements,
         string? embeddingInput = null,
         int? topK = null,
+        ReadOnlyMemory<float>? queryEmbedding = null,
         CancellationToken cancellationToken = default);
     Task<List<(DocumentChunk Chunk, float[] Embedding)>> GetAllChunksWithEmbeddingsAsync(int maxCount = 100, CancellationToken cancellationToken = default);
 }
@@ -52,6 +53,7 @@ public class VectorSearchService : IVectorSearchService
         RagSearchEnhancements? enhancements,
         string? embeddingInput = null,
         int? topK = null,
+        ReadOnlyMemory<float>? queryEmbedding = null,
         CancellationToken cancellationToken = default)
     {
         var k = topK ?? _ragSettings.TopK;
@@ -72,8 +74,18 @@ public class VectorSearchService : IVectorSearchService
             k,
             candidateK);
 
-        var embeddingText = string.IsNullOrWhiteSpace(embeddingInput) ? query : embeddingInput;
-        var queryEmbedding = await _embeddingService.GenerateEmbeddingAsync(embeddingText, cancellationToken);
+        // If a pre-computed embedding is supplied (e.g. when the caller wants to time
+        // the embedding step separately), use it; otherwise embed here.
+        ReadOnlyMemory<float> effectiveEmbedding;
+        if (queryEmbedding is { } provided)
+        {
+            effectiveEmbedding = provided;
+        }
+        else
+        {
+            var embeddingText = string.IsNullOrWhiteSpace(embeddingInput) ? query : embeddingInput;
+            effectiveEmbedding = await _embeddingService.GenerateEmbeddingAsync(embeddingText, cancellationToken);
+        }
 
         var embeddingModel = _aiServiceFactory.GetActiveEmbeddingModel();
         var dimensions = _aiServiceFactory.GetActiveEmbeddingDimensions();
@@ -82,7 +94,7 @@ public class VectorSearchService : IVectorSearchService
         var searchOptions = new VectorSearchOptions<DocumentChunk>();
         var candidates = new List<(DocumentChunk Chunk, double VectorScore)>();
 
-        await foreach (var result in collection.SearchAsync(queryEmbedding, candidateK, searchOptions, cancellationToken))
+        await foreach (var result in collection.SearchAsync(effectiveEmbedding, candidateK, searchOptions, cancellationToken))
         {
             if (result.Score >= minScore)
             {

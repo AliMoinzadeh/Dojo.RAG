@@ -1,6 +1,6 @@
 param(
-  [string]$InputPath = "docs/presentation.de.md",
-  [string]$OutputPath = "docs/presentation.de.html"
+  [string]$InputPath = "docs/presentation.vortrag.de.md",
+  [string]$OutputPath = "docs/presentation.vortrag.de.html"
 )
 
 $ErrorActionPreference = "Stop"

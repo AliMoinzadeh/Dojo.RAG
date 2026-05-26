@@ -15,6 +15,7 @@ public interface IRagOrchestrator
 public class RagOrchestrator : IRagOrchestrator
 {
     private readonly IVectorSearchService _searchService;
+    private readonly IEmbeddingService _embeddingService;
     private readonly IChatClient _chatClient;
     private readonly ITokenCounterService _tokenCounter;
     private readonly IAIServiceFactory _aiServiceFactory;
@@ -38,6 +39,7 @@ public class RagOrchestrator : IRagOrchestrator
 
     public RagOrchestrator(
         IVectorSearchService searchService,
+        IEmbeddingService embeddingService,
         IChatClient chatClient,
         ITokenCounterService tokenCounter,
         IAIServiceFactory aiServiceFactory,
@@ -47,6 +49,7 @@ public class RagOrchestrator : IRagOrchestrator
         ILogger<RagOrchestrator> logger)
     {
         _searchService = searchService;
+        _embeddingService = embeddingService;
         _chatClient = chatClient;
         _tokenCounter = tokenCounter;
         _aiServiceFactory = aiServiceFactory;
@@ -76,13 +79,22 @@ public class RagOrchestrator : IRagOrchestrator
         {
             embeddingInput = await _hydeService.GenerateHypotheticalDocumentAsync(searchQuery, cancellationToken);
         }
-        
-        // Step 1: Search for relevant chunks
+
+        // Step 1a: Embed the query (or HyDE document) — timed separately so the UI can
+        // show embedding vs. vector-search cost as distinct pipeline stages.
+        var embedSw = Stopwatch.StartNew();
+        var queryEmbedding = await _embeddingService.GenerateEmbeddingAsync(embeddingInput, cancellationToken);
+        embedSw.Stop();
+        metrics.EmbeddingTimeMs = embedSw.ElapsedMilliseconds;
+
+        // Step 1b: Search for relevant chunks (uses the pre-computed embedding so we
+        // don't pay for embedding twice and so SearchTimeMs reflects only the search).
         var searchSw = Stopwatch.StartNew();
         var retrievedChunks = await _searchService.SearchAsync(
             searchQuery,
             enhancements,
             embeddingInput,
+            queryEmbedding: queryEmbedding,
             cancellationToken: cancellationToken);
 
         if (enhancements.UseReranking)

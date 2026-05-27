@@ -463,31 +463,43 @@ auf wenige tausend Vergleiche reduziert.
 
 **HNSW** = *Hierarchical Navigable Small World*, ein **graphbasierter ANN-Index**.
 
-```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#313244', 'primaryTextColor': '#cdd6f4', 'lineColor': '#6c7086', 'fontSize': '16px'}}}%%
-flowchart TB
-  subgraph L2["Layer 2 &nbsp;&nbsp; wenige Knoten, weite Sprünge"]
-    direction LR
-    a2((&nbsp;)) --- b2((&nbsp;)) --- c2((&nbsp;)) --- d2((&nbsp;))
-  end
-  subgraph L1["Layer 1 &nbsp;&nbsp; mehr Knoten, mittlere Sprünge"]
-    direction LR
-    a1((&nbsp;)) --- b1((&nbsp;)) --- c1((&nbsp;)) --- d1((&nbsp;)) --- e1((&nbsp;)) --- f1((&nbsp;))
-  end
-  subgraph L0["Layer 0 &nbsp;&nbsp; alle Vektoren, kurze Schritte"]
-    direction LR
-    a0((&nbsp;)) --- b0((&nbsp;)) --- c0((&nbsp;)) --- d0((&nbsp;)) --- e0((&nbsp;)) --- f0((&nbsp;)) --- g0((&nbsp;)) --- h0((&nbsp;)) --- i0((&nbsp;))
-  end
-
-  L2 ==> L1 ==> L0
-
-  classDef node fill:#89b4fa,color:#1e1e2e,stroke:none
-  class a2,b2,c2,d2,a1,b1,c1,d1,e1,f1,a0,b0,c0,d0,e0,f0,g0,h0,i0 node
-  linkStyle 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 stroke:#585b70,stroke-width:2px
-  linkStyle 16,17 stroke:#89b4fa,stroke-width:4px
-```
-
-Die Suche **steigt von oben nach unten** ab: erst grobe Sprünge, dann Feinsuche.
+<svg viewBox="0 0 1020 400" style="width:100%; max-height:430px; display:block; margin:0.5em auto;" font-family="Inter, sans-serif">
+<rect x="285" y="35" width="700" height="70" rx="14" fill="rgba(137,180,250,0.06)" stroke="rgba(137,180,250,0.25)"/>
+<rect x="285" y="160" width="700" height="70" rx="14" fill="rgba(137,180,250,0.06)" stroke="rgba(137,180,250,0.25)"/>
+<rect x="285" y="285" width="700" height="70" rx="14" fill="rgba(137,180,250,0.06)" stroke="rgba(137,180,250,0.25)"/>
+<text x="30" y="64" fill="#a6adc8" font-size="22" font-weight="600">Layer 2</text>
+<text x="30" y="88" fill="#6c7086" font-size="15">wenige Knoten</text>
+<text x="30" y="189" fill="#a6adc8" font-size="22" font-weight="600">Layer 1</text>
+<text x="30" y="213" fill="#6c7086" font-size="15">mehr Knoten</text>
+<text x="30" y="314" fill="#a6adc8" font-size="22" font-weight="600">Layer 0</text>
+<text x="30" y="338" fill="#6c7086" font-size="15">alle Vektoren</text>
+<line x1="320" y1="70" x2="740" y2="70" stroke="#585b70" stroke-width="3"/>
+<line x1="320" y1="195" x2="950" y2="195" stroke="#585b70" stroke-width="3"/>
+<line x1="320" y1="320" x2="950" y2="320" stroke="#585b70" stroke-width="3"/>
+<line x1="320" y1="70" x2="712" y2="70" stroke="#fab387" stroke-width="5"/>
+<polygon points="740,70 712,60 712,80" fill="#fab387"/>
+<line x1="740" y1="92" x2="740" y2="168" stroke="#fab387" stroke-width="5"/>
+<polygon points="740,195 730,168 750,168" fill="#fab387"/>
+<line x1="740" y1="217" x2="740" y2="293" stroke="#fab387" stroke-width="5"/>
+<polygon points="740,320 730,293 750,293" fill="#fab387"/>
+<line x1="740" y1="320" x2="818" y2="320" stroke="#fab387" stroke-width="5"/>
+<polygon points="845,320 818,310 818,330" fill="#fab387"/>
+<circle cx="320" cy="70" r="22" fill="#fab387"/><text x="320" y="78" text-anchor="middle" fill="#1e1e2e" font-size="20" font-weight="700">A</text>
+<circle cx="740" cy="70" r="22" fill="#fab387"/><text x="740" y="78" text-anchor="middle" fill="#1e1e2e" font-size="20" font-weight="700">E</text>
+<circle cx="320" cy="195" r="22" fill="#313244" stroke="#585b70" stroke-width="2"/><text x="320" y="203" text-anchor="middle" fill="#cdd6f4" font-size="20">A</text>
+<circle cx="530" cy="195" r="22" fill="#313244" stroke="#585b70" stroke-width="2"/><text x="530" y="203" text-anchor="middle" fill="#cdd6f4" font-size="20">C</text>
+<circle cx="740" cy="195" r="22" fill="#fab387"/><text x="740" y="203" text-anchor="middle" fill="#1e1e2e" font-size="20" font-weight="700">E</text>
+<circle cx="950" cy="195" r="22" fill="#313244" stroke="#585b70" stroke-width="2"/><text x="950" y="203" text-anchor="middle" fill="#cdd6f4" font-size="20">G</text>
+<circle cx="320" cy="320" r="22" fill="#313244" stroke="#585b70" stroke-width="2"/><text x="320" y="328" text-anchor="middle" fill="#cdd6f4" font-size="20">A</text>
+<circle cx="425" cy="320" r="22" fill="#313244" stroke="#585b70" stroke-width="2"/><text x="425" y="328" text-anchor="middle" fill="#cdd6f4" font-size="20">B</text>
+<circle cx="530" cy="320" r="22" fill="#313244" stroke="#585b70" stroke-width="2"/><text x="530" y="328" text-anchor="middle" fill="#cdd6f4" font-size="20">C</text>
+<circle cx="635" cy="320" r="22" fill="#313244" stroke="#585b70" stroke-width="2"/><text x="635" y="328" text-anchor="middle" fill="#cdd6f4" font-size="20">D</text>
+<circle cx="740" cy="320" r="22" fill="#fab387"/><text x="740" y="328" text-anchor="middle" fill="#1e1e2e" font-size="20" font-weight="700">E</text>
+<circle cx="845" cy="320" r="24" fill="#a6e3a1"/><text x="845" y="328" text-anchor="middle" fill="#1e1e2e" font-size="20" font-weight="700">F</text>
+<circle cx="950" cy="320" r="22" fill="#313244" stroke="#585b70" stroke-width="2"/><text x="950" y="328" text-anchor="middle" fill="#cdd6f4" font-size="20">G</text>
+<text x="320" y="22" text-anchor="middle" fill="#89b4fa" font-size="16" font-weight="600">Query: Einstieg</text>
+<text x="845" y="384" text-anchor="middle" fill="#a6e3a1" font-size="16" font-weight="600">Ziel (nächster Nachbar)</text>
+</svg>
 
 ---
 
@@ -546,7 +558,7 @@ nur etwa **log N** Vergleiche.
 
 <div class="info-box">
 
-**Wichtig fürs Verständnis:**
+**Default:**
 
 HNSW ist in **Qdrant immer aktiv**.
 Wir können den Index nicht

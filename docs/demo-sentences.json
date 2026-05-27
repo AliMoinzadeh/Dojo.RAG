@@ -1,5 +1,5 @@
 {
-  "description": "Demo-Sätze für die Vector Search Demo. Diese Sätze zeigen verschiedene Szenarien und Limitationen der Vektorsuche.",
+  "description": "Demo-Sätze für die Vector Search Demo. Diese Sätze zeigen verschiedene Szenarien und Limitationen der Vektorsuche. Die größere Satzmenge macht den efSearch-Regler bei HNSW spürbar: kleines efSearch reduziert die Kandidaten und kann relevante Treffer verlieren.",
   "sentences": [
     {
       "id": "espresso-pressure",
@@ -26,6 +26,42 @@
       "tags": ["temperatur", "brühen"]
     },
     {
+      "id": "espresso-shot-time",
+      "text": "Ein Espresso-Shot sollte in 25 bis 30 Sekunden durchlaufen.",
+      "category": "espresso",
+      "tags": ["zeit", "extraktion", "shot"]
+    },
+    {
+      "id": "espresso-ratio",
+      "text": "Das typische Brührezept für Espresso liegt bei 1 zu 2, also 18 Gramm Kaffee auf 36 Gramm Getränk.",
+      "category": "espresso",
+      "tags": ["ratio", "dosierung", "rezept"]
+    },
+    {
+      "id": "espresso-channeling",
+      "text": "Channeling entsteht, wenn das Wasser ungleichmäßig durch den Kaffeepuck fließt.",
+      "category": "espresso",
+      "tags": ["channeling", "fehler", "extraktion"]
+    },
+    {
+      "id": "espresso-tamping",
+      "text": "Beim Tampen wird das Kaffeemehl mit etwa 15 Kilogramm gleichmäßig angedrückt.",
+      "category": "espresso",
+      "tags": ["tampen", "druck", "technik"]
+    },
+    {
+      "id": "espresso-ristretto",
+      "text": "Ein Ristretto ist ein besonders kurz extrahierter, konzentrierter Espresso.",
+      "category": "espresso",
+      "tags": ["ristretto", "konzentriert", "kurz"]
+    },
+    {
+      "id": "espresso-lungo",
+      "text": "Ein Lungo läuft länger durch und ergibt eine größere, mildere Tasse.",
+      "category": "espresso",
+      "tags": ["lungo", "lang", "mild"]
+    },
+    {
       "id": "cold-brew-time",
       "text": "Cold Brew Kaffee wird 12 bis 24 Stunden kalt extrahiert.",
       "category": "cold-brew",
@@ -36,6 +72,30 @@
       "text": "Bei Cold Brew wird kein heißes Wasser verwendet, was zu weniger Säure führt.",
       "category": "cold-brew",
       "tags": ["kalt", "säure", "wasser"]
+    },
+    {
+      "id": "cold-brew-ratio",
+      "text": "Für Cold Brew nutzt man oft ein Verhältnis von 1 zu 8 zwischen Kaffee und Wasser.",
+      "category": "cold-brew",
+      "tags": ["ratio", "dosierung", "kalt"]
+    },
+    {
+      "id": "cold-brew-concentrate",
+      "text": "Cold Brew lässt sich als Konzentrat herstellen und später mit Wasser verdünnen.",
+      "category": "cold-brew",
+      "tags": ["konzentrat", "verdünnen", "kalt"]
+    },
+    {
+      "id": "cold-brew-shelf",
+      "text": "Im Kühlschrank hält Cold Brew etwa zwei Wochen ohne Geschmacksverlust.",
+      "category": "cold-brew",
+      "tags": ["lagerung", "kühlschrank", "haltbarkeit"]
+    },
+    {
+      "id": "nitro-coldbrew",
+      "text": "Nitro Cold Brew wird mit Stickstoff angereichert und schmeckt cremig wie ein Stout.",
+      "category": "cold-brew",
+      "tags": ["nitro", "stickstoff", "cremig"]
     },
     {
       "id": "pour-over-filter",
@@ -50,6 +110,30 @@
       "tags": ["blooming", "co2", "frisch"]
     },
     {
+      "id": "pour-over-v60",
+      "text": "Der Hario V60 hat eine spiralförmige Rille, die den Durchfluss beim Pour Over steuert.",
+      "category": "pour-over",
+      "tags": ["v60", "hario", "durchfluss"]
+    },
+    {
+      "id": "pour-over-chemex",
+      "text": "Die Chemex verwendet einen besonders dicken Filter und ergibt einen sehr sauberen Kaffee.",
+      "category": "pour-over",
+      "tags": ["chemex", "filter", "sauber"]
+    },
+    {
+      "id": "pour-over-pulse",
+      "text": "Beim Pulse Pouring wird das Wasser in mehreren Aufgüssen gleichmäßig zugegeben.",
+      "category": "pour-over",
+      "tags": ["pouring", "aufguss", "technik"]
+    },
+    {
+      "id": "pour-over-gooseneck",
+      "text": "Ein Schwanenhalskessel erlaubt präzises Eingießen beim Handfilter.",
+      "category": "pour-over",
+      "tags": ["kessel", "präzision", "handfilter"]
+    },
+    {
       "id": "french-press-coarse",
       "text": "Für die French Press sollte der Kaffee grob gemahlen werden.",
       "category": "french-press",
@@ -60,6 +144,54 @@
       "text": "French Press Kaffee zieht etwa 4 Minuten bevor er gepresst wird.",
       "category": "french-press",
       "tags": ["ziehen", "zeit", "pressen"]
+    },
+    {
+      "id": "french-press-immersion",
+      "text": "Die French Press ist ein Vollkontakt-Verfahren, bei dem der Kaffee im Wasser badet.",
+      "category": "french-press",
+      "tags": ["immersion", "vollkontakt", "verfahren"]
+    },
+    {
+      "id": "french-press-sediment",
+      "text": "Im French Press Kaffee bleibt etwas Satz zurück, was ihm einen vollen Körper gibt.",
+      "category": "french-press",
+      "tags": ["satz", "körper", "textur"]
+    },
+    {
+      "id": "aeropress-basic",
+      "text": "Die AeroPress kombiniert Immersion und Druck und ist sehr reisetauglich.",
+      "category": "aeropress",
+      "tags": ["aeropress", "immersion", "reise"]
+    },
+    {
+      "id": "aeropress-inverted",
+      "text": "Bei der inversen Methode der AeroPress wird sie umgedreht aufgesetzt, um länger zu ziehen.",
+      "category": "aeropress",
+      "tags": ["aeropress", "invers", "technik"]
+    },
+    {
+      "id": "aeropress-fast",
+      "text": "Eine AeroPress liefert in unter zwei Minuten eine Tasse Kaffee.",
+      "category": "aeropress",
+      "tags": ["aeropress", "schnell", "zeit"]
+    },
+    {
+      "id": "moka-stovetop",
+      "text": "Der Mokka-Kanne erzeugt auf dem Herd Druck durch Wasserdampf.",
+      "category": "moka",
+      "tags": ["moka", "herd", "dampf"]
+    },
+    {
+      "id": "moka-bialetti",
+      "text": "Die Bialetti ist die klassische italienische Espressokanne für zu Hause.",
+      "category": "moka",
+      "tags": ["bialetti", "italien", "klassiker"]
+    },
+    {
+      "id": "moka-no-boil",
+      "text": "Eine Mokkakanne sollte man vom Herd nehmen, bevor das Wasser stark kocht.",
+      "category": "moka",
+      "tags": ["moka", "hitze", "tipp"]
     },
     {
       "id": "beans-arabica",
@@ -80,6 +212,66 @@
       "tags": ["röstung", "säure", "bitter"]
     },
     {
+      "id": "beans-single-origin",
+      "text": "Ein Single Origin Kaffee stammt aus einer einzigen Region oder Farm.",
+      "category": "bohnen",
+      "tags": ["single-origin", "herkunft", "farm"]
+    },
+    {
+      "id": "beans-blend",
+      "text": "Ein Blend mischt Bohnen verschiedener Herkünfte für ein ausgewogenes Profil.",
+      "category": "bohnen",
+      "tags": ["blend", "mischung", "profil"]
+    },
+    {
+      "id": "beans-ethiopia",
+      "text": "Äthiopische Kaffees zeigen oft blumige und fruchtige Aromen.",
+      "category": "bohnen",
+      "tags": ["äthiopien", "blumig", "fruchtig"]
+    },
+    {
+      "id": "beans-colombia",
+      "text": "Kolumbianischer Kaffee ist bekannt für seine ausgewogene Süße und nussige Noten.",
+      "category": "bohnen",
+      "tags": ["kolumbien", "süße", "nussig"]
+    },
+    {
+      "id": "beans-processing-washed",
+      "text": "Bei der gewaschenen Aufbereitung wird das Fruchtfleisch vor dem Trocknen entfernt.",
+      "category": "bohnen",
+      "tags": ["aufbereitung", "gewaschen", "verarbeitung"]
+    },
+    {
+      "id": "beans-processing-natural",
+      "text": "Bei der natürlichen Aufbereitung trocknet die Kirsche samt Fruchtfleisch in der Sonne.",
+      "category": "bohnen",
+      "tags": ["aufbereitung", "natural", "sonne"]
+    },
+    {
+      "id": "roast-light",
+      "text": "Helle Röstungen betonen die fruchtige Säure und die Herkunftsaromen der Bohne.",
+      "category": "röstung",
+      "tags": ["hell", "säure", "aroma"]
+    },
+    {
+      "id": "roast-first-crack",
+      "text": "Der First Crack markiert beim Rösten den Übergang zur trinkbaren Röstung.",
+      "category": "röstung",
+      "tags": ["first-crack", "rösten", "phase"]
+    },
+    {
+      "id": "roast-development",
+      "text": "Die Entwicklungszeit nach dem First Crack bestimmt Körper und Süße der Röstung.",
+      "category": "röstung",
+      "tags": ["entwicklung", "körper", "süße"]
+    },
+    {
+      "id": "roast-degassing",
+      "text": "Frisch geröstete Bohnen sollten einige Tage ausgasen, bevor man sie verwendet.",
+      "category": "röstung",
+      "tags": ["ausgasen", "frisch", "ruhezeit"]
+    },
+    {
       "id": "milk-foam",
       "text": "Für Cappuccino wird die Milch auf etwa 65 Grad aufgeschäumt.",
       "category": "milch",
@@ -92,16 +284,82 @@
       "tags": ["latte-art", "schaum", "textur"]
     },
     {
+      "id": "milk-microfoam",
+      "text": "Mikroschaum besteht aus winzigen Bläschen und fühlt sich seidig an.",
+      "category": "milch",
+      "tags": ["mikroschaum", "bläschen", "seidig"]
+    },
+    {
+      "id": "milk-oat",
+      "text": "Hafermilch lässt sich gut aufschäumen und ist eine beliebte pflanzliche Alternative.",
+      "category": "milch",
+      "tags": ["hafer", "pflanzlich", "alternative"]
+    },
+    {
+      "id": "milk-flat-white",
+      "text": "Ein Flat White hat im Vergleich zum Cappuccino eine dünnere Schaumschicht.",
+      "category": "milch",
+      "tags": ["flat-white", "schaum", "verhältnis"]
+    },
+    {
+      "id": "milk-steam-wand",
+      "text": "Mit der Dampflanze zieht man zuerst Luft ein und rollt die Milch danach.",
+      "category": "milch",
+      "tags": ["dampflanze", "rollen", "technik"]
+    },
+    {
       "id": "grind-fresh",
       "text": "Frisch gemahlener Kaffee verliert nach 15 Minuten bereits Aroma.",
       "category": "mahlung",
       "tags": ["frisch", "aroma", "zeit"]
     },
     {
+      "id": "grind-burr",
+      "text": "Eine Mühle mit Kegelmahlwerk liefert ein gleichmäßigeres Mahlgut als ein Schlagmahlwerk.",
+      "category": "mahlung",
+      "tags": ["mahlwerk", "gleichmäßig", "mühle"]
+    },
+    {
+      "id": "grind-size-effect",
+      "text": "Ein feinerer Mahlgrad erhöht den Widerstand und verlangsamt die Extraktion.",
+      "category": "mahlung",
+      "tags": ["mahlgrad", "fein", "extraktion"]
+    },
+    {
+      "id": "grind-distribution",
+      "text": "Eine gleichmäßige Verteilung der Partikelgröße sorgt für eine ausgewogene Extraktion.",
+      "category": "mahlung",
+      "tags": ["verteilung", "partikel", "ausgewogen"]
+    },
+    {
+      "id": "grind-static",
+      "text": "Statische Aufladung beim Mahlen lässt sich mit einem Tropfen Wasser auf den Bohnen reduzieren.",
+      "category": "mahlung",
+      "tags": ["statik", "tipp", "mahlen"]
+    },
+    {
       "id": "water-quality",
       "text": "Die Wasserqualität beeinflusst den Kaffeegeschmack erheblich.",
       "category": "wasser",
       "tags": ["wasser", "qualität", "geschmack"]
+    },
+    {
+      "id": "water-hardness",
+      "text": "Zu hartes Wasser führt zu Kalkablagerungen in der Espressomaschine.",
+      "category": "wasser",
+      "tags": ["härte", "kalk", "maschine"]
+    },
+    {
+      "id": "water-tds",
+      "text": "Für die Kaffeezubereitung wird ein mineralischer Gehalt um 150 ppm empfohlen.",
+      "category": "wasser",
+      "tags": ["tds", "mineralien", "ppm"]
+    },
+    {
+      "id": "water-filter",
+      "text": "Ein Wasserfilter entfernt Chlor und reduziert die Härte für besseren Geschmack.",
+      "category": "wasser",
+      "tags": ["filter", "chlor", "härte"]
     },
     {
       "id": "caffeine-effect",
@@ -114,6 +372,210 @@
       "text": "Entkoffeinierter Kaffee wird durch Wasserextraktion oder CO2-Verfahren hergestellt.",
       "category": "gesundheit",
       "tags": ["entkoffeiniert", "verfahren"]
+    },
+    {
+      "id": "caffeine-halflife",
+      "text": "Die Halbwertszeit von Koffein im Körper beträgt etwa fünf bis sechs Stunden.",
+      "category": "gesundheit",
+      "tags": ["koffein", "halbwertszeit", "abbau"]
+    },
+    {
+      "id": "coffee-antioxidants",
+      "text": "Kaffee enthält Antioxidantien, die zur täglichen Aufnahme beitragen können.",
+      "category": "gesundheit",
+      "tags": ["antioxidantien", "gesund", "inhaltsstoffe"]
+    },
+    {
+      "id": "coffee-afternoon",
+      "text": "Wer empfindlich ist, sollte am Nachmittag auf Kaffee verzichten, um besser zu schlafen.",
+      "category": "gesundheit",
+      "tags": ["schlaf", "nachmittag", "tipp"]
+    },
+    {
+      "id": "history-ethiopia",
+      "text": "Der Legende nach entdeckte ein Ziegenhirte in Äthiopien die belebende Wirkung der Kaffeekirsche.",
+      "category": "geschichte",
+      "tags": ["ursprung", "äthiopien", "legende"]
+    },
+    {
+      "id": "history-coffeehouse",
+      "text": "Im 17. Jahrhundert verbreiteten sich Kaffeehäuser in ganz Europa.",
+      "category": "geschichte",
+      "tags": ["kaffeehaus", "europa", "geschichte"]
+    },
+    {
+      "id": "history-three-waves",
+      "text": "Die dritte Welle des Kaffees behandelt Kaffee als handwerkliches Genussmittel.",
+      "category": "geschichte",
+      "tags": ["third-wave", "handwerk", "bewegung"]
+    },
+    {
+      "id": "trade-fairtrade",
+      "text": "Fairtrade-Siegel sollen den Bauern einen Mindestpreis für ihre Ernte garantieren.",
+      "category": "handel",
+      "tags": ["fairtrade", "preis", "siegel"]
+    },
+    {
+      "id": "trade-direct",
+      "text": "Beim Direct Trade kaufen Röster direkt bei den Produzenten ein.",
+      "category": "handel",
+      "tags": ["direct-trade", "röster", "produzent"]
+    },
+    {
+      "id": "trade-commodity",
+      "text": "Der Rohkaffeepreis wird an Börsen wie der in New York gehandelt.",
+      "category": "handel",
+      "tags": ["börse", "rohkaffee", "preis"]
+    },
+    {
+      "id": "storage-airtight",
+      "text": "Kaffee bleibt am längsten frisch in einem luftdichten, lichtgeschützten Behälter.",
+      "category": "lagerung",
+      "tags": ["luftdicht", "frisch", "behälter"]
+    },
+    {
+      "id": "storage-no-fridge",
+      "text": "Ganze Bohnen gehören nicht in den Kühlschrank, da sie Feuchtigkeit und Gerüche aufnehmen.",
+      "category": "lagerung",
+      "tags": ["kühlschrank", "feuchtigkeit", "tipp"]
+    },
+    {
+      "id": "storage-valve",
+      "text": "Das Aromaventil an der Tüte lässt CO2 entweichen, ohne Sauerstoff hereinzulassen.",
+      "category": "lagerung",
+      "tags": ["ventil", "co2", "verpackung"]
+    },
+    {
+      "id": "equipment-scale",
+      "text": "Eine Waage mit Timer hilft, das Brührezept exakt zu wiederholen.",
+      "category": "ausrüstung",
+      "tags": ["waage", "timer", "reproduzierbar"]
+    },
+    {
+      "id": "equipment-distribution-tool",
+      "text": "Ein Verteilwerkzeug glättet das Kaffeemehl im Siebträger vor dem Tampen.",
+      "category": "ausrüstung",
+      "tags": ["verteiler", "siebträger", "werkzeug"]
+    },
+    {
+      "id": "equipment-portafilter",
+      "text": "Ein bodenloser Siebträger zeigt die Extraktion und deckt Channeling auf.",
+      "category": "ausrüstung",
+      "tags": ["siebträger", "bodenlos", "extraktion"]
+    },
+    {
+      "id": "equipment-wdt",
+      "text": "Mit der WDT-Methode lockert eine feine Nadel Klumpen im Kaffeemehl auf.",
+      "category": "ausrüstung",
+      "tags": ["wdt", "nadel", "technik"]
+    },
+    {
+      "id": "sensory-tasting-notes",
+      "text": "Verkostungsnotizen beschreiben Aromen wie Schokolade, Beere oder Zitrus.",
+      "category": "sensorik",
+      "tags": ["aroma", "notizen", "verkostung"]
+    },
+    {
+      "id": "sensory-cupping",
+      "text": "Beim Cupping bewerten Prüfer Duft, Geschmack und Nachklang nach einem festen Protokoll.",
+      "category": "sensorik",
+      "tags": ["cupping", "bewertung", "protokoll"]
+    },
+    {
+      "id": "sensory-acidity",
+      "text": "Eine lebendige Säure wird als angenehm und erfrischend wahrgenommen, nicht als sauer.",
+      "category": "sensorik",
+      "tags": ["säure", "lebendig", "wahrnehmung"]
+    },
+    {
+      "id": "sensory-body",
+      "text": "Der Körper beschreibt das Mundgefühl, also wie schwer oder leicht der Kaffee wirkt.",
+      "category": "sensorik",
+      "tags": ["körper", "mundgefühl", "textur"]
+    },
+    {
+      "id": "extraction-under",
+      "text": "Unterextrahierter Kaffee schmeckt sauer und dünn, weil zu wenig gelöst wurde.",
+      "category": "extraktion",
+      "tags": ["unterextraktion", "sauer", "fehler"]
+    },
+    {
+      "id": "extraction-over",
+      "text": "Überextrahierter Kaffee wird bitter und adstringierend.",
+      "category": "extraktion",
+      "tags": ["überextraktion", "bitter", "fehler"]
+    },
+    {
+      "id": "extraction-yield",
+      "text": "Eine Extraktionsausbeute zwischen 18 und 22 Prozent gilt als ausgewogen.",
+      "category": "extraktion",
+      "tags": ["ausbeute", "prozent", "ausgewogen"]
+    },
+    {
+      "id": "extraction-temperature-effect",
+      "text": "Höhere Brühtemperaturen lösen mehr Stoffe und verstärken die Bitterkeit.",
+      "category": "extraktion",
+      "tags": ["temperatur", "lösung", "bitter"]
+    },
+    {
+      "id": "drink-cappuccino",
+      "text": "Ein klassischer Cappuccino besteht zu gleichen Teilen aus Espresso, Milch und Schaum.",
+      "category": "getränke",
+      "tags": ["cappuccino", "verhältnis", "milch"]
+    },
+    {
+      "id": "drink-latte",
+      "text": "Ein Caffè Latte enthält deutlich mehr Milch als ein Cappuccino.",
+      "category": "getränke",
+      "tags": ["latte", "milch", "verhältnis"]
+    },
+    {
+      "id": "drink-macchiato",
+      "text": "Ein Espresso Macchiato wird nur mit einem Klecks Milchschaum getoppt.",
+      "category": "getränke",
+      "tags": ["macchiato", "schaum", "espresso"]
+    },
+    {
+      "id": "drink-americano",
+      "text": "Ein Americano entsteht, wenn man Espresso mit heißem Wasser verlängert.",
+      "category": "getränke",
+      "tags": ["americano", "wasser", "verlängert"]
+    },
+    {
+      "id": "drink-affogato",
+      "text": "Beim Affogato wird eine Kugel Vanilleeis mit heißem Espresso übergossen.",
+      "category": "getränke",
+      "tags": ["affogato", "eis", "dessert"]
+    },
+    {
+      "id": "music-black-coffee",
+      "text": "Black Coffee ist ein bekannter südafrikanischer DJ und Musikproduzent.",
+      "category": "musik",
+      "tags": ["musik", "dj", "black coffee"]
+    },
+    {
+      "id": "music-java-language",
+      "text": "Java ist außerdem eine weit verbreitete Programmiersprache für Unternehmenssoftware.",
+      "category": "technik",
+      "tags": ["java", "programmierung", "software"]
+    },
+    {
+      "id": "geo-java-island",
+      "text": "Java ist die bevölkerungsreichste Insel Indonesiens.",
+      "category": "geografie",
+      "tags": ["java", "insel", "indonesien"]
+    },
+    {
+      "id": "misc-tea-vs-coffee",
+      "text": "Tee enthält ebenfalls Koffein, setzt es aber langsamer frei als Kaffee.",
+      "category": "vergleich",
+      "tags": ["tee", "koffein", "vergleich"]
+    },
+    {
+      "id": "misc-energy-drink",
+      "text": "Energy Drinks liefern Koffein zusammen mit viel Zucker und Zusatzstoffen.",
+      "category": "vergleich",
+      "tags": ["energy-drink", "koffein", "zucker"]
     }
   ],
   "demoScenarios": [
@@ -124,7 +586,7 @@
       "explanation": "Java ist ein Synonym für Kaffee, wird aber semantisch nicht erkannt"
     },
     {
-      "name": "Negations-Problem", 
+      "name": "Negations-Problem",
       "query": "Kaffee ohne Hitze",
       "expectedMatch": "cold-brew-no-heat",
       "explanation": "Negationen sind schwer für reine Vektorsuche"
@@ -140,6 +602,18 @@
       "query": "Temperatur unter 95 Grad",
       "expectedMatch": "espresso-temperature",
       "explanation": "Numerische Vergleiche sind schwer für Embedding-Modelle"
+    },
+    {
+      "name": "Mehrdeutigkeit-Problem",
+      "query": "Java",
+      "expectedMatch": "geo-java-island",
+      "explanation": "Java kann Kaffee, Programmiersprache oder Insel meinen – Kontext fehlt der reinen Vektorsuche"
+    },
+    {
+      "name": "HNSW-Recall-Problem",
+      "query": "belebende Wirkung am Morgen",
+      "expectedMatch": "caffeine-effect",
+      "explanation": "Der relevante Treffer teilt kaum Schlüsselwörter mit der Anfrage. Bei kleinem efSearch fällt er aus dem Kandidatenfenster und der Recall sinkt sichtbar."
     }
   ]
 }

@@ -40,8 +40,6 @@ Verwendet ein LLM um die Suchanfrage mit Synonymen und verwandten Begriffen zu e
 
 ---
 
-## Geplante Verbesserungen
-
 ### 4. Reranking (Cross-Encoder)
 **Status:** ✅ Implementiert
 
@@ -59,8 +57,6 @@ Nach der initialen Vektorsuche werden die Top-K Ergebnisse mit einem Cross-Encod
 
 **Hinweis:**
 - Aktuell LLM-basiertes Reranking (für Demo-Zwecke) mit Fallback auf Original-Reihenfolge
-
-**Aufwand:** Mittel - benötigt zusätzliches ML-Model oder API-Integration
 
 ---
 
@@ -82,8 +78,6 @@ Statt Dokumente nach fixer Zeichenzahl zu chunken, werden semantische Grenzen ve
 **Ansatz:**
 - Satzgrenzen-basiertes Aggregieren auf Ziel-Chunk-Groesse
 
-**Aufwand:** Mittel - Anpassung in DocumentChunker
-
 ---
 
 ### 6. Min-Score Threshold Slider
@@ -101,8 +95,6 @@ Dynamische Anpassung des Minimum-Relevanz-Scores zur Laufzeit über einen UI-Sli
 - Frontend: Range-Slider (0.0 - 1.0)
 - Backend: `minScore` Parameter im Search-Endpoint
 - Filterung in Standard und Enhanced Search
-
-**Aufwand:** Gering - nur UI + Parameter
 
 ---
 
